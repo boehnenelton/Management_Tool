@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="assets/Management_CLI_Banner_1280x640.svg" alt="Management CLI Header Banner Logo" width="100%" />
+</div>
+
 # Management Tool Suite [Unified Router & Subsystem Hub]
 
 > **Author**: Elton Boehnen · boehnenelton2024@gmail.com · [boehnenelton2024.pages.dev](https://boehnenelton2024.pages.dev) · [GitHub](https://github.com/boehnenelton)  
