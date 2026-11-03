@@ -1,0 +1,24 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Records_Type": ["ScriptConfig"],
+  "Fields": [
+    {"name": "setting_name", "type": "string"},
+    {"name": "setting_value", "type": "any"},
+    {"name": "description", "type": "string"}
+  ],
+  "Values": [
+    ["app_name", "Stateful Context CLI", "Application human-readable name"],
+    ["app_version", "1.1.0", "Application solid semantic version"],
+    ["package_version", "101", "Package solid integer version"],
+    ["terminal_columns_max", 57, "Maximum viewport width for Termux portrait mode"],
+    ["accent_color_hex", "#DE2626", "Policy 8.1 Truecolor active accent color"],
+    ["default_mode", "reports", "Default operational mode (1=logging, 2=reports)"],
+    ["research_root_directory", "/storage/emulated/0/Admin/Resources/Reports", "Root directory for research papers and reports"],
+    ["global_logs_directory", "/storage/emulated/0/Admin/System/Global_Logs", "Directory for BEJSON 105 daily log sinks"],
+    ["state_file_path", "config/state.json", "Relative path to persistent context state"],
+    ["registry_file_path", "data/registry.bejson", "Relative path to multi-domain targets registry"],
+    ["reports_index_path", "data/reports_index.bejson", "Relative path to reports and research index"]
+  ]
+}

@@ -1,0 +1,56 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Operating System & Editor artifacts
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Temporary & lock files
+*.tmp*
+*.lock
+
+# -----------------------------------------------------------------------------
+# Exclude Logs, Notes, and Reports (Everything but the tools themselves)
+# -----------------------------------------------------------------------------
+
+# 1. Logs: runtime logs, sinks, and log databases
+*.log
+*Log-*.bejson
+Global_Logs/
+logs/
+**/logs/**
+data/logs/
+
+# 2. Notes: runtime MFDB tables, note contents, and static website builds
+data/mfdb/
+data/category.bejson
+data/note.bejson
+exports/notes_site/
+exports/*.md
+exports/*.txt
+
+# 3. Reports: research report databases, document indexes, and report builds
+data/reports_index.bejson
+data/registry.bejson
+data/registry/
+reports/
+exports/log_reports/
+exports/*.html
+
+# Runtime state caches (Loaded Chamber)
+config/state.json
+state.json
+.system_generated/
+
+# Keep tool templates
+!lib/templates/
+!lib/templates/*.html
+!templates/
+!templates/*.html

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{theme}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{description}">
+  <meta property="og:title" content="{title}">
+  <meta property="og:description" content="{description}">
+  <meta property="og:type" content="article">
+  <title>{title}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary-red: #DE2626;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'Roboto Mono', monospace;
+    }
+
+    html[data-theme="light"], :root {
+      --bg-color: #FFFFFF;
+      --surface-color: #F8F8F8;
+      --text-color: #111111;
+      --muted-color: #555555;
+      --border-color: #E0E0E0;
+      --code-bg: #F4F4F4;
+      --accent-hover: #B91C1C;
+      --callout-bg: #FFF5F5;
+    }
+
+    html[data-theme="dark"] {
+      --bg-color: #050505;
+      --surface-color: #0F0F0F;
+      --text-color: #FFFFFF;
+      --muted-color: #A0A0A0;
+      --border-color: #222222;
+      --code-bg: #141414;
+      --accent-hover: #EF4444;
+      --callout-bg: #1C0F0F;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.7;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Page shell ── */
+    .page-header {
+      padding: 2.5rem 1.5rem 1.5rem;
+      border-bottom: 2px solid var(--primary-red);
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .page-header h1 {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--text-color);
+      line-height: 1.2;
+    }
+
+    main {
+      flex: 1;
+      padding: 2rem 1.5rem;
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    footer {
+      padding: 2rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+      font-size: 0.875rem;
+      color: var(--muted-color);
+      line-height: 1.6;
+    }
+
+    footer a {
+      color: var(--text-color);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: var(--primary-red);
+      text-decoration: underline;
+    }
+
+    /* ── Article / content ── */
+    .bejson-cms-article h1,
+    .bejson-cms-article h2,
+    .bejson-cms-article h3,
+    .bejson-cms-article h4,
+    .bejson-cms-article h5,
+    .bejson-cms-article h6 {
+      color: var(--primary-red);
+      font-weight: 700;
+      line-height: 1.25;
+      margin: 2rem 0 0.75rem;
+    }
+
+    .bejson-cms-article h1 { font-size: 1.875rem; }
+    .bejson-cms-article h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.35rem; }
+    .bejson-cms-article h3 { font-size: 1.25rem; }
+    .bejson-cms-article h4 { font-size: 1.1rem; }
+    .bejson-cms-article h5, .bejson-cms-article h6 { font-size: 1rem; }
+
+    .bejson-cms-article p { margin: 0.85rem 0; }
+
+    .bejson-cms-article a {
+      color: var(--primary-red);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .bejson-cms-article a:hover { text-decoration: underline; }
+
+    .bejson-cms-article strong, .bejson-cms-article b {
+      color: var(--primary-red);
+      font-weight: 700;
+    }
+
+    .bejson-cms-article em, .bejson-cms-article i { font-style: italic; }
+
+    .bejson-cms-article code {
+      font-family: var(--font-mono);
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 3px;
+      font-size: 0.88em;
+      border: 1px solid var(--border-color);
+    }
+
+    .bejson-cms-article pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--primary-red);
+      border-radius: 6px;
+      padding: 1.25rem;
+      overflow-x: auto;
+      margin: 1.25rem 0;
+    }
+
+    .bejson-cms-article pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.85em;
+    }
+
+    .bejson-cms-article blockquote {
+      border-left: 4px solid var(--primary-red);
+      padding: 0.75rem 1.25rem;
+      margin: 1.25rem 0;
+      color: var(--muted-color);
+      background: var(--callout-bg);
+      border-radius: 0 4px 4px 0;
+    }
+
+    .bejson-cms-article .callout {
+      border-left: 4px solid var(--primary-red);
+      padding: 0.75rem 1.25rem;
+      margin: 1.25rem 0;
+      background: var(--surface-color);
+      border-radius: 0 4px 4px 0;
+    }
+
+    .bejson-cms-article .callout-note { border-left-color: #2563EB; }
+    .bejson-cms-article .callout-tip { border-left-color: #16A34A; }
+    .bejson-cms-article .callout-important { border-left-color: #7C3AED; }
+    .bejson-cms-article .callout-warning { border-left-color: #D97706; }
+    .bejson-cms-article .callout-caution { border-left-color: #DC2626; }
+
+    .bejson-cms-article ul, .bejson-cms-article ol {
+      padding-left: 1.75rem;
+      margin: 0.75rem 0;
+    }
+
+    .bejson-cms-article li { margin: 0.35rem 0; }
+
+    .bejson-cms-article .table-container {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+    }
+
+    .bejson-cms-article table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+      font-size: 0.92rem;
+    }
+
+    .bejson-cms-article th, .bejson-cms-article td {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .bejson-cms-article th {
+      background: var(--surface-color);
+      font-weight: 700;
+      color: var(--text-color);
+      border-bottom: 2px solid var(--primary-red);
+    }
+
+    .bejson-cms-article hr {
+      border: none;
+      border-top: 1px solid var(--border-color);
+      margin: 2rem 0;
+    }
+
+    .bejson-cms-article img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+      display: block;
+      margin: 1.5rem auto;
+    }
+
+    .bejson-cms-article del {
+      color: var(--muted-color);
+      text-decoration: line-through;
+    }
+
+    .task-list { list-style: none; padding-left: 0 !important; }
+    .task-item { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .page-header h1 { font-size: 1.6rem; }
+      .page-header, main, footer { padding: 1.25rem 1rem; }
+      .bejson-cms-article h1 { font-size: 1.5rem; }
+      .bejson-cms-article h2 { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header" role="banner">
+    <h1>{title}</h1>
+  </header>
+
+  <main role="main">
+    <article class="bejson-cms-article">
+{content}
+    </article>
+  </main>
+
+  <footer role="contentinfo">
+    <p>Generated {date} &mdash; MD_To_HTML v{version}</p>
+    <p>
+      <strong>{author_name}</strong> &mdash;
+      <a href="mailto:{author_email}">{author_email}</a><br>
+      <a href="{author_site}">{author_site}</a> &mdash;
+      <a href="{author_github}">{author_github}</a>
+    </p>
+  </footer>
+
+</body>
+</html>
