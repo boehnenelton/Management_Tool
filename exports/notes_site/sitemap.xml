@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://boehnenelton2024.pages.dev/notes/index.html</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/sitemap.html</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/architecture/index.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/architecture/bejson-104a-core-specification/index.html</loc><lastmod>2026-11-03</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/general/index.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/general/termux-mobile-cli-design-principles/index.html</loc><lastmod>2026-11-03</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/specs/index.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/specs/mfdb-spec-v1-31/index.html</loc><lastmod>2026-11-03</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/index.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/replacing-json-with-bejson-for-ai---segment-6-of-11/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/replacing-json-with-bejson-for-ai---segment-5-of-11/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/replacing-json-with-bejson-for-ai---segment-4-of-11/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/replacing-json-with-bejson-for-ai---segment-3-of-11/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/replacing-json-with-bejson-for-ai---segment-2-of-11/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/replacing-json-with-bejson-for-ai---segment-1-of-11/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/how-bejson-replaces-json-for-ai-transcript/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/how-bejson-fixes-ai-token-waste-transcript/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/how-ai-rewrites-its-own-code-1-transcript/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/how-ai-rewrites-its-own-code-transcript/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/can-ai-safely-rewrite-its-bejson-memory---segment-2-of-4/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/can-ai-safely-rewrite-its-bejson-memory---segment-1-of-4/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/can-ai-safely-rewrite-its-bejson-memory-transcript-full/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/bejson-most-powerful-format-transcript/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/bejson-data-god-edition-transcript/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/bejson-105-and-self-healing-flat-files-transcript/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/bejson-105-stops-ai-context-drift-transcript/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/autopsy-of-a-monolith-decoupling-the-bejson-core-transcript/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/architectural-fractures-in-the-cliai-ecosystem-transcript/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://boehnenelton2024.pages.dev/notes/transcripts/architecting-the-zero-cost-edge-transcript/index.html</loc><lastmod>2026-11-04</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+</urlset>

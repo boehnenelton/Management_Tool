@@ -1,0 +1,7 @@
+skill audit
+
+----------------
+~/.gemini/config/skills
+I want a full audit of all skills focusing on guard rails  constraints and overlap. Report skills to me that lack guardrails or overlap and create an efficacies and report back skills to me that need improved or skills that can be merged to remove redundancy. 
+
+Write a full report at the reports folder in  ... verify you checked each skill I want you to write a check list of all skill names and your report and then mark each skill is either clean or report the issues on it.

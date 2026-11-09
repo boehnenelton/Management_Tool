@@ -1,0 +1,81 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Records_Type": [
+    "PathDeclaration"
+  ],
+  "Schema_Name": "Path_Declaration",
+  "Schema_Version": "200",
+  "Fields": [
+    {
+      "name": "id",
+      "type": "string"
+    },
+    {
+      "name": "current_path",
+      "type": "string"
+    },
+    {
+      "name": "tier",
+      "type": "string"
+    },
+    {
+      "name": "purpose",
+      "type": "string"
+    },
+    {
+      "name": "semantic_file_types",
+      "type": "string"
+    },
+    {
+      "name": "allowed_extensions",
+      "type": "string"
+    },
+    {
+      "name": "subfolder_rule",
+      "type": "string"
+    },
+    {
+      "name": "retention_policy",
+      "type": "string"
+    },
+    {
+      "name": "governing_skill",
+      "type": "string"
+    },
+    {
+      "name": "flags",
+      "type": "string"
+    },
+    {
+      "name": "action",
+      "type": "string"
+    },
+    {
+      "name": "action_modifier",
+      "type": "string"
+    },
+    {
+      "name": "last_audited_at",
+      "type": "string"
+    }
+  ],
+  "Values": [
+    [
+      "b67ca7c0-f8df-4d93-830d-cb0c58802670",
+      "/storage/emulated/0/Admin/System/Job_Management/Logs",
+      "Tier 3: Purpose Folder",
+      "Tier 3 Purpose Folder for daily job execution logs.",
+      "[\"job_specifications\"]",
+      ".bejson, .md",
+      "flat_files_only",
+      "daily_partition",
+      "job-lifecycle-coordinator",
+      "",
+      "",
+      "",
+      "2026-11-09T01:52:04Z"
+    ]
+  ]
+}

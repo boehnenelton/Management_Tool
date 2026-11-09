@@ -1,0 +1,63 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Schema_Name": "Job Document Schema",
+  "Schema_Version": "1.0.0",
+  "Records_Type": [
+    "JobTask"
+  ],
+  "Job_Id": "job_20261109_020444",
+  "Job_Name": "Test Ecosystem Verification",
+  "Job_Instructions": "Verify all BEJSON 104a registries and loaded chamber context.",
+  "Job_Context_Notes": "Path: /storage/emulated/0/Admin/System/Job_Management",
+  "Job_Priority": "normal",
+  "Job_Status": "active",
+  "Creation_Date": "2026-11-09",
+  "Job_Complete": false,
+  "Fields": [
+    {
+      "name": "task_id",
+      "type": "string"
+    },
+    {
+      "name": "task_order",
+      "type": "integer"
+    },
+    {
+      "name": "task_name",
+      "type": "string"
+    },
+    {
+      "name": "task_description",
+      "type": "string"
+    },
+    {
+      "name": "task_completed",
+      "type": "boolean"
+    }
+  ],
+  "Values": [
+    [
+      "ac3db9fe",
+      1,
+      "Check active registry",
+      "",
+      false
+    ],
+    [
+      "9bb55d16",
+      2,
+      "Check completed registry",
+      "",
+      false
+    ],
+    [
+      "e069d03f",
+      3,
+      "Verify loaded chamber subdir",
+      "",
+      false
+    ]
+  ]
+}

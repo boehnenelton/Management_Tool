@@ -1,0 +1,69 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Parent_Hierarchy": "../104a.mfdb.bejson",
+  "Records_Type": [
+    "Category"
+  ],
+  "Fields": [
+    {
+      "name": "cat_id",
+      "type": "string"
+    },
+    {
+      "name": "cat_name",
+      "type": "string"
+    },
+    {
+      "name": "cat_slug",
+      "type": "string"
+    },
+    {
+      "name": "cat_description",
+      "type": "string"
+    },
+    {
+      "name": "created_at",
+      "type": "string"
+    },
+    {
+      "name": "updated_at",
+      "type": "string"
+    }
+  ],
+  "Values": [
+    [
+      "cat_001",
+      "General",
+      "general",
+      "Default category for general notes and scratchpads",
+      "2026-11-03T17:13:59.956459+00:00",
+      "2026-11-03T17:13:59.956459+00:00"
+    ],
+    [
+      "cat_002",
+      "Architecture",
+      "architecture",
+      "System blueprints and schemas",
+      "2026-11-03T17:16:29.110847+00:00",
+      "2026-11-03T17:16:29.110847+00:00"
+    ],
+    [
+      "cat_003",
+      "Specs",
+      "specs",
+      "",
+      "2026-11-03T17:16:50.185780+00:00",
+      "2026-11-03T17:16:50.185780+00:00"
+    ],
+    [
+      "cat_004",
+      "Transcripts",
+      "transcripts",
+      "",
+      "2026-11-04T06:55:02.367430+00:00",
+      "2026-11-04T06:55:02.367430+00:00"
+    ]
+  ]
+}

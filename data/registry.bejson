@@ -1,0 +1,35 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Records_Type": [
+    "DomainTarget"
+  ],
+  "Fields": [
+    {
+      "name": "domain_id",
+      "type": "string"
+    },
+    {
+      "name": "group_name",
+      "type": "string"
+    },
+    {
+      "name": "target_id",
+      "type": "string"
+    },
+    {
+      "name": "target_label",
+      "type": "string"
+    },
+    {
+      "name": "payload_content",
+      "type": "string"
+    },
+    {
+      "name": "created_at",
+      "type": "string"
+    }
+  ],
+  "Values": []
+}

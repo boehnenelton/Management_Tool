@@ -15,52 +15,9 @@ Thumbs.db
 # Temporary & lock files
 *.tmp*
 *.lock
+.system_generated/
 
-# -----------------------------------------------------------------------------
-# Exclude Logs, Notes, and Reports (Everything but the tools themselves)
-# -----------------------------------------------------------------------------
-
-# 1. Logs: runtime logs, sinks, and log databases
+# External runtime global logs sinks
 *.log
 *Log-*.bejson
 Global_Logs/
-logs/
-**/logs/**
-data/logs/
-data/*.txt
-
-
-# 2. Notes: runtime MFDB tables, note contents, and static website builds
-data/mfdb/
-data/category.bejson
-data/note.bejson
-exports/notes_site/
-exports/*.md
-exports/*.txt
-
-# 3. Reports: research report databases, document indexes, and report builds
-data/reports_index.bejson
-data/registry.bejson
-data/registry/
-reports/
-exports/log_reports/
-exports/*.html
-
-# 4. Jobs: runtime job queues, completed archives, and dynamic registries
-data/jobs/
-data/completed_jobs/
-data/saved_jobs/
-data/job_registry.104a.bejson
-data/completed_jobs_registry.104a.bejson
-
-
-# Runtime state caches (Loaded Chamber)
-config/state.json
-state.json
-.system_generated/
-
-# Keep tool templates
-!lib/templates/
-!lib/templates/*.html
-!templates/
-!templates/*.html

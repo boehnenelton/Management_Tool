@@ -1,0 +1,63 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Schema_Name": "Job Document Schema",
+  "Schema_Version": "1.0.0",
+  "Records_Type": [
+    "JobTask"
+  ],
+  "Job_Id": "job_20261109_021151",
+  "Job_Name": "Test Migration Pipeline",
+  "Job_Instructions": "Verify query and lifecycle execution after storage relocation.",
+  "Job_Context_Notes": "Self-contained in management_tool/data",
+  "Job_Priority": "normal",
+  "Job_Status": "active",
+  "Creation_Date": "2026-11-09",
+  "Job_Complete": false,
+  "Fields": [
+    {
+      "name": "task_id",
+      "type": "string"
+    },
+    {
+      "name": "task_order",
+      "type": "integer"
+    },
+    {
+      "name": "task_name",
+      "type": "string"
+    },
+    {
+      "name": "task_description",
+      "type": "string"
+    },
+    {
+      "name": "task_completed",
+      "type": "boolean"
+    }
+  ],
+  "Values": [
+    [
+      "00f45122",
+      1,
+      "Verify active registry",
+      "",
+      false
+    ],
+    [
+      "79559d5f",
+      2,
+      "Verify query engine",
+      "",
+      false
+    ],
+    [
+      "e3037fb5",
+      3,
+      "Complete test job",
+      "",
+      false
+    ]
+  ]
+}

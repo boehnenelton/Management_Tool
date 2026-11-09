@@ -1,0 +1,326 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Schema_Name": "Completed Job Registry Schema",
+  "Schema_Version": "1.0.0",
+  "Records_Type": [
+    "CompletedJobEntry"
+  ],
+  "Fields": [
+    {
+      "name": "job_id",
+      "type": "string"
+    },
+    {
+      "name": "job_name",
+      "type": "string"
+    },
+    {
+      "name": "priority",
+      "type": "string"
+    },
+    {
+      "name": "creation_date",
+      "type": "string"
+    },
+    {
+      "name": "completion_date",
+      "type": "string"
+    },
+    {
+      "name": "duration_seconds",
+      "type": "integer"
+    },
+    {
+      "name": "completed_by",
+      "type": "string"
+    },
+    {
+      "name": "resolution_summary",
+      "type": "string"
+    },
+    {
+      "name": "artifacts_produced",
+      "type": "string"
+    },
+    {
+      "name": "job_instructions",
+      "type": "string"
+    },
+    {
+      "name": "job_context_notes",
+      "type": "string"
+    },
+    {
+      "name": "tasks_json",
+      "type": "string"
+    },
+    {
+      "name": "archive_file_path",
+      "type": "string"
+    },
+    {
+      "name": "tags",
+      "type": "string"
+    }
+  ],
+  "Values": [
+    [
+      "job_legacy_001",
+      "BEJSON_CMS Publishing",
+      "normal",
+      "2026-11-02 09:33:56",
+      "2026-11-02 09:33:56",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from BEJSON_CMS Publishing",
+      "",
+      "",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/BEJSON_CMS Publishing",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_002",
+      "Folder Search Recovery",
+      "normal",
+      "2026-11-02 08:56:56",
+      "2026-11-02 08:56:56",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from Folder Search Recovery",
+      "",
+      "",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/Folder Search Recovery",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_003",
+      "HTML Doc Standardization ",
+      "normal",
+      "2026-11-02 09:46:22",
+      "2026-11-02 09:46:22",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from HTML Doc Standardization ",
+      "",
+      "",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/HTML Doc Standardization ",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_004",
+      "Profile Job",
+      "normal",
+      "2026-10-31 21:14:27",
+      "2026-10-31 21:14:27",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from Profile Job",
+      "",
+      "",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/Profile Job",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_005",
+      "Project Chunker Remddiation",
+      "normal",
+      "2026-11-02 09:24:15",
+      "2026-11-02 09:24:15",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from Project Chunker Remddiation",
+      "",
+      "",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/Project Chunker Remddiation",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_006",
+      "Project_Chunker",
+      "normal",
+      "2026-10-27 06:29:31",
+      "2026-10-27 06:29:31",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from Project_Chunker.md",
+      "",
+      "VERIFYING PROJECT CHUNKER.\n\n\nI need you to run a full testing suite and to end on /storage/emulated/0/Admin/System/Project_,Chunker\n\nBuild any testing tool required to verify flawless functionality, create mock project chunk files it's not in operation so don't worry about preserving the chunkers data.\n\nCreate test tools in /storage/emulated/0/Admin/System/Test_Tools/Chunker_Tests with a config file pointing at the chunkers root path..",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/Project_Chunker.md",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_007",
+      "Project_Job",
+      "normal",
+      "2026-11-07 07:25:32",
+      "2026-11-07 07:25:32",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from Project_Job.md",
+      "",
+      "\ntask 1\n\n/storage/emulated/0/Admin/Core/Projects_Archive/0RGANIZE\n\nthis directory directly previously held lots of archived legacy projects we've already issued them all trackers I'm pretty sure but we need to do is make sure that they go into the project archive \n\nbut here's the catch we need to know update our project system so that projects are moved into their status and type folders rather than all dumped into a project archive \n\n\nthat means creating a folder for status first so it would be",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/Project_Job.md",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_008",
+      "RIGHT AWAY THIS FIRST AS IN DO IT NOW",
+      "normal",
+      "2026-11-07 15:56:18",
+      "2026-11-07 15:56:18",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from RIGHT AWAY THIS FIRST AS IN DO IT NOW.txt",
+      "",
+      "\n# Staging\n\nStage a copy of my core validator from my 104 and my 105 file is   copy the validator and the core file for actually writing \n\n\ncompletely remove 104db from the staged files, mark headers in bold , NON CANNONICAL DEBUG VERSION\n\nWANT THIS TO ONLY BE 104 104A  AND MFDB\n\nSTAGE THEM IN ~/staged_experiments\n\nstage error code core file copies as well remove 104db and or nested core.\n\n# copy crash courses staged dir\n\n/storage/emulated/0/Admin/Libraries/BEJSON_Crash_Course_105-V3.md\n\n/storag",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/RIGHT AWAY THIS FIRST AS IN DO IT NOW.txt",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_009",
+      "Skill Patching",
+      "normal",
+      "2026-11-02 08:47:21",
+      "2026-11-02 08:47:21",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from Skill Patching",
+      "",
+      "",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/Skill Patching",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_010",
+      "Tool",
+      "normal",
+      "2026-11-04 05:16:07",
+      "2026-11-04 05:16:07",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from Tool.md",
+      "",
+      "standardized auto tool  thRat uses the automated drop zone system for file processing. \n\nModify the trimmer tool so you can set a dimentionsl percent, default 3 percent and it1±★['ll chip.off 3 percent of videos edges by basically zooming in 3% to the center or cropping out the center and removing images and water marks as well if they happen me and that little edge margin of the outside of the video borders you can also set it to zero for edge or for trimming off video time if you only want to ",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/Tool.md",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_011",
+      "do this job first",
+      "normal",
+      "2026-11-07 07:47:13",
+      "2026-11-07 07:47:13",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from do this job first.md",
+      "",
+      "task 1\n\nsweep the following folder /storage/emulated/0/Admin\n\ncreate a standardized .path.bejson schema that will sit in the root of non project directories, will declare uuid and the paths intended purpose.... field ID and a field for purpose the field declaring the current path so if the file gets lost it should become immediately apparent for it to fully directory changes it can be corrected maybe a alias history field too in case it does get changed null by default and a flags field also nul",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/do this job first.md",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_012",
+      "do this job last",
+      "normal",
+      "2026-11-07 07:51:39",
+      "2026-11-07 07:51:39",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from do this job last.md",
+      "",
+      "once you have completed the job of creating environment variables and moving any junk or misplaced files or projects then begin setting up a job for moving files where they belong according to their .path.bejson files. You should create a schema ledger indexing the .path.bejson files of each directory, recording each directory's purpose and, under a field called semantic_file_types, the file types or directory types (such as projects or documents) that belong in that directory, and then begin mo",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/do this job last.md",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_013",
+      "job immediately",
+      "normal",
+      "2026-11-07 15:48:39",
+      "2026-11-07 15:48:39",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from job immediately.md",
+      "",
+      "\n/admin /dev repos/ CLI AI\n\ntask 1\ni want to be able to.click a message header after selecting it and fold it it's been toggle button\n\ntask 2 after 3 turns I want message to. auto collapse, \n\ntask 3\nI want a  I want a new Scratchpad navigation section, been selecting a message and you hit scratch it will send the message to the scratch pad \n\ntask 4\nlogs need to be fixed so it shows actually receives messages not just outgoing\n\n\ntask 5\nadmin repos newagent\nexamine new agents xml async commands an",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/job immediately.md",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_014",
+      "no fluff templates job",
+      "normal",
+      "2026-10-22 22:42:01",
+      "2026-10-22 22:42:01",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from no fluff templates job.md",
+      "",
+      "# JOB TEMPLATE\n- NOT AN ACTUAL JOB\n\n# Job Name\n\n\n## Source or Context:\n\n/storage/emulated/0/Documents/AGY/skills/behtml-document-template/assets/Template_HTML_Document.html\n\n\n~/.gemini/config/skills/behtml-document-template/assets/Template_HTML_Document.html\n~/.gemini/config/skills/behtml-document-template/assets/Template_Declaration_of_Standardization.html\n\n\n## Job Goal\nMAKE TEMPLATES CORRECTLY\n\n## Job Instructions\nThe purpose of a tempate is to create a widely reusable scaffold. A template is ",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/no fluff templates job.md",
+      "legacy,migrated"
+    ],
+    [
+      "job_legacy_015",
+      "svg job",
+      "normal",
+      "2026-10-25 01:13:16",
+      "2026-10-25 01:13:16",
+      0,
+      "Elton Boehnen",
+      "Historical job migrated from svg job.md",
+      "",
+      "# JOB TEMPLATE\n- NOT AN ACTUAL JOB\n\n# Job Name\nlib_bejson_,graphics family creation\n\nonly \n\n## Source or Context:\nlib_bejson_graphics family\n\n\n\nNew files: \n\nlib_bejson_graphics_core\nactually does the writing of the files and the SVG creation and everything else from playwright\n\nlib_bejson_graphics_canvas_templates\nbed HTML in needs\n\nI want the SVG captures through playwright and the canvas is found in the following directory moved to a new library family\n\nmove this entire system into the new pho",
+      "",
+      "[]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/svg job.md",
+      "legacy,migrated"
+    ],
+    [
+      "job_20261109_020444",
+      "Test Ecosystem Verification",
+      "urgent",
+      "2026-11-09",
+      "2026-11-09 02:05:13",
+      0,
+      "Elton Boehnen",
+      "All registry schemas and chamber operations verified with 100% test pass.",
+      "job_registry.104a.bejson,completed_jobs_registry.104a.bejson",
+      "Verify all BEJSON 104a registries and loaded chamber context.",
+      "Path: /storage/emulated/0/Admin/System/Job_Management",
+      "[{\"task_id\": \"ac3db9fe\", \"task_order\": 1, \"task_name\": \"Check active registry\", \"task_description\": \"\", \"task_completed\": true}, {\"task_id\": \"9bb55d16\", \"task_order\": 2, \"task_name\": \"Check completed registry\", \"task_description\": \"\", \"task_completed\": true}, {\"task_id\": \"e069d03f\", \"task_order\": 3, \"task_name\": \"Verify loaded chamber subdir\", \"task_description\": \"\", \"task_completed\": true}]",
+      "/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs/job_20261109_020444_Test_Ecosystem_Verification.bejson",
+      ""
+    ]
+  ]
+}

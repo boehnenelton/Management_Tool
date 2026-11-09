@@ -1,0 +1,65 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Schema_Name": "Active Job Registry Schema",
+  "Schema_Version": "1.0.0",
+  "Records_Type": [
+    "JobRegistryEntry"
+  ],
+  "Fields": [
+    {
+      "name": "job_id",
+      "type": "string"
+    },
+    {
+      "name": "job_name",
+      "type": "string"
+    },
+    {
+      "name": "priority",
+      "type": "string"
+    },
+    {
+      "name": "status",
+      "type": "string"
+    },
+    {
+      "name": "creation_date",
+      "type": "string"
+    },
+    {
+      "name": "assigned_actor",
+      "type": "string"
+    },
+    {
+      "name": "job_instructions",
+      "type": "string"
+    },
+    {
+      "name": "job_context_notes",
+      "type": "string"
+    },
+    {
+      "name": "task_count",
+      "type": "integer"
+    },
+    {
+      "name": "tasks_completed",
+      "type": "integer"
+    },
+    {
+      "name": "tasks_json",
+      "type": "string"
+    },
+    {
+      "name": "job_file_path",
+      "type": "string"
+    },
+    {
+      "name": "tags",
+      "type": "string"
+    }
+  ],
+  "Values": []
+}

@@ -1,0 +1,147 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Records_Type": [
+    "ReportIndexRecord"
+  ],
+  "Fields": [
+    {
+      "name": "doc_id",
+      "type": "string"
+    },
+    {
+      "name": "category_name",
+      "type": "string"
+    },
+    {
+      "name": "file_name",
+      "type": "string"
+    },
+    {
+      "name": "doc_title",
+      "type": "string"
+    },
+    {
+      "name": "doc_path",
+      "type": "string"
+    },
+    {
+      "name": "file_size_kb",
+      "type": "float"
+    },
+    {
+      "name": "created_at",
+      "type": "string"
+    },
+    {
+      "name": "updated_at",
+      "type": "string"
+    },
+    {
+      "name": "tags",
+      "type": "string"
+    }
+  ],
+  "Values": [
+    [
+      "rep_001",
+      "Architecture",
+      "antigravity_cli_layered_skill_architecture_report.md",
+      "Antigravity CLI Layered Skill Architecture Report",
+      "/storage/emulated/0/Admin/Resources/Reports/antigravity_cli_layered_skill_architecture_report.md",
+      118.5,
+      "2026-10-17T01:20:00Z",
+      "2026-10-17T01:20:00Z",
+      "architecture,skills,l1_l6"
+    ],
+    [
+      "rep_002",
+      "Architecture",
+      "antigravity_cli_extensibility_report.md",
+      "Antigravity CLI Extensibility Report",
+      "/storage/emulated/0/Admin/Resources/Reports/antigravity_cli_extensibility_report.md",
+      7.5,
+      "2026-10-30T00:59:00Z",
+      "2026-10-30T00:59:00Z",
+      "architecture,extensibility,cli"
+    ],
+    [
+      "rep_003",
+      "BEJSON",
+      "bejson_104db_vs_104_nested_architectural_report.md",
+      "BEJSON 104db vs 104 Nested Architectural Report",
+      "/storage/emulated/0/Admin/Resources/Reports/bejson_104db_vs_104_nested_architectural_report.md",
+      87.1,
+      "2026-10-30T05:54:00Z",
+      "2026-10-30T05:54:00Z",
+      "bejson,104db,nested"
+    ],
+    [
+      "rep_004",
+      "BEJSON",
+      "bejson_104db_vs_104_nested_report_plan.md",
+      "BEJSON 104db vs 104 Nested Report Plan",
+      "/storage/emulated/0/Admin/Resources/Reports/bejson_104db_vs_104_nested_report_plan.md",
+      18.5,
+      "2026-10-30T05:40:00Z",
+      "2026-10-30T05:40:00Z",
+      "bejson,planning,comparison"
+    ],
+    [
+      "rep_005",
+      "Environment",
+      "environment_enhancement_and_context_report.md",
+      "Environment Enhancement & Context Report",
+      "/storage/emulated/0/Admin/Resources/Reports/environment_enhancement_and_context_report.md",
+      9.3,
+      "2026-10-29T22:30:00Z",
+      "2026-10-29T22:30:00Z",
+      "environment,context,definitions"
+    ],
+    [
+      "rep_006",
+      "Ecosystem",
+      "github_ecosystem_enhancement_report.md",
+      "GitHub Ecosystem Enhancement Report",
+      "/storage/emulated/0/Admin/Resources/Reports/github_ecosystem_enhancement_report.md",
+      8.6,
+      "2026-10-29T22:28:00Z",
+      "2026-10-29T22:28:00Z",
+      "github,ecosystem,automation"
+    ],
+    [
+      "rep_007",
+      "AI_Interactions",
+      "gemini_interactions_api_lessons_learned_report.md",
+      "Gemini Interactions API Lessons Learned Report",
+      "/storage/emulated/0/Admin/Resources/Reports/gemini_interactions_api_lessons_learned_report.md",
+      11.3,
+      "2026-10-30T04:16:00Z",
+      "2026-10-30T04:16:00Z",
+      "ai,gemini,api"
+    ],
+    [
+      "rep_008",
+      "Guides",
+      "litert_lm_usage_guide.md",
+      "LiteRT LM Usage Guide",
+      "/storage/emulated/0/Admin/Resources/Reports/litert_lm_usage_guide.md",
+      7.5,
+      "2026-10-19T02:52:00Z",
+      "2026-10-19T02:52:00Z",
+      "guide,litert,on_device_lm"
+    ],
+    [
+      "rep_009",
+      "Audits",
+      "management_tool_coherency_and_taxonomy_audit_report.md",
+      "Management Tool Suite Coherency & Taxonomy Audit Report",
+      "/storage/emulated/0/Admin/Resources/Reports/Audits/management_tool_coherency_and_taxonomy_audit_report.md",
+      10.4,
+      "2026-11-05T09:14:07.332884+00:00",
+      "2026-11-05T09:14:07.332884+00:00",
+      "research,report"
+    ]
+  ]
+}

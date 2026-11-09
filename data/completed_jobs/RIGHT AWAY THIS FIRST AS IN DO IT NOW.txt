@@ -1,0 +1,24 @@
+
+# Staging
+
+Stage a copy of my core validator from my 104 and my 105 file is   copy the validator and the core file for actually writing 
+
+
+completely remove 104db from the staged files, mark headers in bold , NON CANNONICAL DEBUG VERSION
+
+WANT THIS TO ONLY BE 104 104A  AND MFDB
+
+STAGE THEM IN ~/staged_experiments
+
+stage error code core file copies as well remove 104db and or nested core.
+
+# copy crash courses staged dir
+
+/storage/emulated/0/Admin/Libraries/BEJSON_Crash_Course_105-V3.md
+
+/storage/emulated/0/Admin/Resources/Documentation/BEJSON_Crash_Course/CRASH_COURSE_23_OFFICIAL.md
+
+# edit copy headers mark them ax experimental
+
+strip  any mention of anything except 104 104a and mfdb
+ 

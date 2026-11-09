@@ -1,0 +1,47 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Records_Type": [
+    "StatefulContextState"
+  ],
+  "active_mode": "reminders",
+  "active_category": "Audits",
+  "active_entry": "rep_009",
+  "updated_at": "2026-11-09T02:11:57.827442+00:00",
+  "Fields": [
+    {
+      "name": "state_key",
+      "type": "string"
+    },
+    {
+      "name": "state_value",
+      "type": "any"
+    },
+    {
+      "name": "last_modified",
+      "type": "string"
+    }
+  ],
+  "Values": [
+    [
+      "active_mode",
+      "reports",
+      "2026-11-02T03:30:10.646909+00:00"
+    ],
+    [
+      "active_category",
+      null,
+      "2026-11-02T03:30:10.646909+00:00"
+    ],
+    [
+      "active_entry",
+      null,
+      "2026-11-02T03:30:10.646909+00:00"
+    ]
+  ],
+  "active_job": "job_20261109_021151",
+  "active_job_name": "Test Migration Pipeline",
+  "active_job_subdir": "completed",
+  "active_job_path": "/storage/emulated/0/Admin/System/tools/management_tool/data/completed_jobs/job_20261109_021151_Test_Migration_Pipeline.bejson"
+}
