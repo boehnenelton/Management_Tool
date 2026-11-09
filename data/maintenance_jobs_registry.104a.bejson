@@ -1,0 +1,139 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Schema_Name": "Maintenance Jobs Registry Schema",
+  "Schema_Version": "1.0.0",
+  "Records_Type": [
+    "MaintenanceJobRecord"
+  ],
+  "Fields": [
+    {
+      "name": "job_id",
+      "type": "string",
+      "description": "Unique identifier for maintenance job"
+    },
+    {
+      "name": "job_name",
+      "type": "string",
+      "description": "Human-readable functional title of the maintenance job"
+    },
+    {
+      "name": "priority",
+      "type": "string",
+      "description": "Execution priority: urgent, high, normal, low"
+    },
+    {
+      "name": "frequency",
+      "type": "string",
+      "description": "Recurring schedule: session_start, daily, weekly"
+    },
+    {
+      "name": "governing_skill",
+      "type": "string",
+      "description": "Canonical skill responsible for execution"
+    },
+    {
+      "name": "command_to_run",
+      "type": "string",
+      "description": "Direct CLI command to query or execute this maintenance routine"
+    },
+    {
+      "name": "job_instructions",
+      "type": "string",
+      "description": "Actionable instructions for agent execution"
+    },
+    {
+      "name": "job_context_notes",
+      "type": "string",
+      "description": "Policy constraints, directories, and background context"
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "description": "Standing status: always 'standing' or 'recurring' (never terminated)"
+    },
+    {
+      "name": "last_run_timestamp",
+      "type": "string",
+      "description": "ISO-8601 UTC timestamp of last verified execution"
+    },
+    {
+      "name": "run_count",
+      "type": "integer",
+      "description": "Total cumulative execution count"
+    },
+    {
+      "name": "last_result",
+      "type": "string",
+      "description": "Outcome of last run: pending, verified, clean, drift_detected, failed"
+    },
+    {
+      "name": "tags",
+      "type": "string",
+      "description": "Comma-separated search tags"
+    }
+  ],
+  "Values": [
+    [
+      "maint-001",
+      "Staged Downloads Sweep & Maintenance",
+      "high",
+      "session_start",
+      "file-archive-coordinator",
+      "bash /storage/emulated/0/Admin/System/tools/management_tool/management.sh job --maintenance-record maint-001",
+      "Inspect /storage/emulated/0/Download for completed deliverable packages (e.g. *-PKG*). Sweep and relocate archives to $PROJECTS_ARCHIVE_ROOT/<Status>/<Type>/, pruning older builds.",
+      "Governed by Policy §2.2 and §3.2. Ensures downloads folder does not accumulate duplicate packages.",
+      "standing",
+      "2026-11-09 02:21:20 UTC",
+      1,
+      "verified",
+      "downloads,sweep,staging,archive"
+    ],
+    [
+      "maint-002",
+      "Urgent Jobs Queue & Pickup Inspection",
+      "urgent",
+      "session_start",
+      "job-lifecycle-coordinator",
+      "python3 /storage/emulated/0/Admin/System/tools/management_tool/job_tool.py --list",
+      "Inspect $JOBS_FOLDER for pending urgent job files. Execute tasks start-to-finish without stopping, mark complete, and archive to $COMPLETED_JOBS_FOLDER.",
+      "Governed by Policy §0b and §2.3. Urgent jobs take absolute precedence upon discovery.",
+      "standing",
+      "",
+      0,
+      "pending",
+      "jobs,urgent,lifecycle,queue"
+    ],
+    [
+      "maint-003",
+      "Directory Hierarchy Drift & Exclusivity Audit",
+      "normal",
+      "session_start",
+      "file-hierarchy-manager",
+      "python3 /data/data/com.termux/files/home/.gemini/config/skills/file-hierarchy-manager/scripts/hierarchy_governor.py --audit-drift",
+      "Run hierarchy governor audit to ensure 4-Tier Directory Organization Framework, .path.bejson trackers, and exclusivity rules are intact with 0 drift.",
+      "Governed by Policy §1.1 and file-hierarchy-manager skill.",
+      "standing",
+      "",
+      0,
+      "pending",
+      "hierarchy,audit,drift,paths"
+    ],
+    [
+      "maint-004",
+      "Daily BEJSON Log Partition & Health Verification",
+      "normal",
+      "session_start",
+      "log-telemetry-coordinator",
+      "python3 /storage/emulated/0/Admin/System/tools/management_tool/logging_tool.py read --since today",
+      "Verify daily execution log exists at $GLOBAL_LOGS/Log-<YYYY-MM-DD>.bejson and record initialization heartbeat.",
+      "Governed by Policy §2.5 and §5.3.",
+      "standing",
+      "",
+      0,
+      "pending",
+      "logging,telemetry,heartbeat,health"
+    ]
+  ]
+}

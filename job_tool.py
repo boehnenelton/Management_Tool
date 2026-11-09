@@ -70,10 +70,10 @@ SUBDIVIDER_57: str = "-" * 57
 
 # ── Canonical Environment Resolution (Policy §4.5) ───────────────────────────
 DEFINITIONS_STORE_PATH: Path = Path("/storage/emulated/0/.env/user/definitions.json")
-DEFAULT_JOB_ROOT: Path = Path("/storage/emulated/0/Admin/System/Job_Management")
-DEFAULT_JOBS_FOLDER: Path = DEFAULT_JOB_ROOT / "Jobs"
-DEFAULT_COMPLETED_FOLDER: Path = DEFAULT_JOB_ROOT / "Completed_Jobs"
-DEFAULT_TEMPLATES_FOLDER: Path = DEFAULT_JOB_ROOT / "Job_Templates"
+DEFAULT_JOB_ROOT: Path = LOCAL_DATA_DIRECTORY
+DEFAULT_JOBS_FOLDER: Path = DEFAULT_JOB_ROOT / "jobs"
+DEFAULT_COMPLETED_FOLDER: Path = DEFAULT_JOB_ROOT / "completed_jobs"
+DEFAULT_TEMPLATES_FOLDER: Path = DEFAULT_JOB_ROOT / "saved_jobs"
 
 
 def resolve_canonical_paths() -> Dict[str, Path]:
@@ -85,7 +85,8 @@ def resolve_canonical_paths() -> Dict[str, Path]:
         "JOB_TEMPLATES": DEFAULT_TEMPLATES_FOLDER,
         "SAVED_JOBS": LOCAL_SAVED_JOBS_DIRECTORY,
         "ACTIVE_REGISTRY": DEFAULT_JOB_ROOT / "job_registry.104a.bejson",
-        "COMPLETED_REGISTRY": DEFAULT_COMPLETED_FOLDER / "completed_jobs_registry.104a.bejson",
+        "COMPLETED_REGISTRY": DEFAULT_JOB_ROOT / "completed_jobs_registry.104a.bejson",
+        "MAINTENANCE_REGISTRY": DEFAULT_JOB_ROOT / "maintenance_jobs_registry.104a.bejson",
     }
 
     if DEFINITIONS_STORE_PATH.exists():
@@ -97,11 +98,12 @@ def resolve_canonical_paths() -> Dict[str, Path]:
                         k, v = str(row[0]).strip(), str(row[1]).strip()
                         if k == "JOBS_FOLDER":
                             paths_map["JOBS_FOLDER"] = Path(v)
-                            paths_map["JOB_ROOT"] = Path(v).parent
-                            paths_map["ACTIVE_REGISTRY"] = paths_map["JOB_ROOT"] / "job_registry.104a.bejson"
+                            paths_map["ACTIVE_REGISTRY"] = Path(v).parent / "job_registry.104a.bejson"
                         elif k == "COMPLETED_JOBS_FOLDER":
                             paths_map["COMPLETED_JOBS_FOLDER"] = Path(v)
-                            paths_map["COMPLETED_REGISTRY"] = Path(v) / "completed_jobs_registry.104a.bejson"
+                            paths_map["COMPLETED_REGISTRY"] = Path(v).parent / "completed_jobs_registry.104a.bejson"
+                        elif k == "MAINTENANCE_JOBS_REGISTRY":
+                            paths_map["MAINTENANCE_REGISTRY"] = Path(v)
                         elif k == "JOB_TEMPLATES":
                             paths_map["JOB_TEMPLATES"] = Path(v)
         except Exception:
@@ -141,6 +143,22 @@ COMPLETED_REGISTRY_FIELDS: List[Dict[str, str]] = [
     {"name": "job_context_notes", "type": "string"},
     {"name": "tasks_json", "type": "string"},
     {"name": "archive_file_path", "type": "string"},
+    {"name": "tags", "type": "string"},
+]
+
+MAINTENANCE_REGISTRY_FIELDS: List[Dict[str, str]] = [
+    {"name": "job_id", "type": "string"},
+    {"name": "job_name", "type": "string"},
+    {"name": "priority", "type": "string"},
+    {"name": "frequency", "type": "string"},
+    {"name": "governing_skill", "type": "string"},
+    {"name": "command_to_run", "type": "string"},
+    {"name": "job_instructions", "type": "string"},
+    {"name": "job_context_notes", "type": "string"},
+    {"name": "status", "type": "string"},
+    {"name": "last_run_timestamp", "type": "string"},
+    {"name": "run_count", "type": "integer"},
+    {"name": "last_result", "type": "string"},
     {"name": "tags", "type": "string"},
 ]
 
@@ -203,6 +221,9 @@ class JobManagerEngine:
 
         if not self.paths["COMPLETED_REGISTRY"].exists():
             save_bejson_atomic(self.paths["COMPLETED_REGISTRY"], load_bejson_file(self.paths["COMPLETED_REGISTRY"], COMPLETED_REGISTRY_FIELDS, "Completed Job Registry Schema"))
+
+        if not self.paths["MAINTENANCE_REGISTRY"].exists():
+            save_bejson_atomic(self.paths["MAINTENANCE_REGISTRY"], load_bejson_file(self.paths["MAINTENANCE_REGISTRY"], MAINTENANCE_REGISTRY_FIELDS, "Maintenance Jobs Registry Schema"))
 
     # ── Chamber State Management ─────────────────────────────────────────────
     def load_state(self) -> Dict[str, Any]:
@@ -322,6 +343,94 @@ class JobManagerEngine:
                         "subdir": "saved",
                     })
         return results
+
+    # ── Maintenance Registry Operations (Standing Recurring) ─────────────────
+    def get_maintenance_registry(self) -> Dict[str, Any]:
+        return load_bejson_file(self.paths["MAINTENANCE_REGISTRY"], MAINTENANCE_REGISTRY_FIELDS, "Maintenance Jobs Registry Schema")
+
+    def list_maintenance_jobs(self) -> List[Dict[str, Any]]:
+        """Return list of all standing recurring maintenance jobs from registry."""
+        doc = self.get_maintenance_registry()
+        fmap = compile_bejson_field_map(doc)
+        results = []
+        for idx, row in enumerate(doc.get("Values", []), 1):
+            results.append({
+                "index": idx,
+                "job_id": str(row[fmap.get("job_id", 0)]),
+                "job_name": str(row[fmap.get("job_name", 1)]),
+                "priority": str(row[fmap.get("priority", 2)]),
+                "frequency": str(row[fmap.get("frequency", 3)]),
+                "governing_skill": str(row[fmap.get("governing_skill", 4)]),
+                "command_to_run": str(row[fmap.get("command_to_run", 5)]),
+                "job_instructions": str(row[fmap.get("job_instructions", 6)]),
+                "job_context_notes": str(row[fmap.get("job_context_notes", 7)]),
+                "status": str(row[fmap.get("status", 8)]),
+                "last_run_timestamp": str(row[fmap.get("last_run_timestamp", 9)]),
+                "run_count": int(row[fmap.get("run_count", 10)] or 0),
+                "last_result": str(row[fmap.get("last_result", 11)]),
+                "tags": str(row[fmap.get("tags", 12)]),
+                "standing": True,
+            })
+        return results
+
+    def query_maintenance_jobs(self, term: str) -> List[Dict[str, Any]]:
+        """Search maintenance jobs by keyword across id, name, skill, instructions, and tags."""
+        term_clean = term.lower()
+        return [
+            j for j in self.list_maintenance_jobs()
+            if term_clean in j["job_id"].lower()
+            or term_clean in j["job_name"].lower()
+            or term_clean in j["governing_skill"].lower()
+            or term_clean in j["job_instructions"].lower()
+            or term_clean in j["tags"].lower()
+        ]
+
+    def record_maintenance_run(self, job_id: str, result: str = "verified") -> Optional[Dict[str, Any]]:
+        """
+        Record verified execution of a standing maintenance job.
+        Updates last_run_timestamp and increments run_count.
+        NOTE: Maintenance jobs are NEVER marked completed; status remains 'standing'.
+        """
+        doc = self.get_maintenance_registry()
+        fmap = compile_bejson_field_map(doc)
+        id_idx = fmap.get("job_id", 0)
+        time_idx = fmap.get("last_run_timestamp", 9)
+        count_idx = fmap.get("run_count", 10)
+        res_idx = fmap.get("last_result", 11)
+        stat_idx = fmap.get("status", 8)
+
+        now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        updated_job = None
+
+        for row in doc.get("Values", []):
+            if str(row[id_idx]).strip().lower() == job_id.strip().lower() or str(row[fmap.get("job_name", 1)]).strip().lower() == job_id.strip().lower():
+                row[time_idx] = now_utc
+                current_count = int(row[count_idx] or 0)
+                row[count_idx] = current_count + 1
+                row[res_idx] = result
+                row[stat_idx] = "standing"  # Invariant: Never completed
+                save_bejson_atomic(self.paths["MAINTENANCE_REGISTRY"], doc)
+                updated_job = {
+                    "job_id": str(row[id_idx]),
+                    "job_name": str(row[fmap.get("job_name", 1)]),
+                    "status": "standing",
+                    "last_run_timestamp": now_utc,
+                    "run_count": current_count + 1,
+                    "last_result": result,
+                }
+                break
+
+        return updated_job
+
+    def check_pending_urgent_files(self) -> List[str]:
+        """Scan JOBS_FOLDER for pending job files."""
+        jobs_folder = self.paths["JOBS_FOLDER"]
+        if jobs_folder.exists() and jobs_folder.is_dir():
+            try:
+                return [p.name for p in jobs_folder.iterdir() if not p.name.startswith(".") and p.name.upper() != "AGENTS.MD"]
+            except Exception:
+                pass
+        return []
 
     # ── Job Selection & Resolution ───────────────────────────────────────────
     def select_job(self, query: str) -> Optional[Dict[str, Any]]:
@@ -872,6 +981,140 @@ def print_job_card(record: Dict[str, Any]) -> None:
     print(DIVIDER_57)
 
 
+def print_maintenance_jobs_table(jobs: List[Dict[str, Any]]) -> None:
+    """Print 57-column table of standing recurring maintenance jobs."""
+    print(DIVIDER_57)
+    print(f" {ACCENT}MAINTENANCE JOBS REGISTRY [STANDING RECURRING]{RESET}")
+    print(SUBDIVIDER_57)
+    if not jobs:
+        print(f" {DIM}No maintenance jobs registered.{RESET}")
+    else:
+        print(f" {ACCENT}{'#':<3} {'PRIO':<7} {'STATUS':<9} {'FREQ':<9} {'NAME'}{RESET}")
+        print(SUBDIVIDER_57)
+        for j in jobs:
+            idx_str = f"{j['index']:<3}"
+            prio_str = j['priority'][:6]
+            stat_str = f"[{j['status'][:7]}]"
+            freq_str = j['frequency'][:8]
+            name_str = j['job_name'][:22]
+            print(f" {idx_str} {prio_str:<7} {stat_str:<9} {freq_str:<9} {name_str}")
+            print(f"     {DIM}Cmd: {j['command_to_run'][:48]}{RESET}")
+            if j.get("last_run_timestamp"):
+                print(f"     {DIM}Last: {j['last_run_timestamp'][:19]} | Runs: {j.get('run_count', 0)} | Res: {j.get('last_result', 'pending')}{RESET}")
+    print(DIVIDER_57)
+
+
+def print_init_check(engine: JobManagerEngine) -> None:
+    """High-density composite initialization audit for AI agents on session start."""
+    print(DIVIDER_57)
+    print(f" {ACCENT}SESSION STARTUP AUDIT & INITIALIZATION DIRECTIVES{RESET}")
+    print(SUBDIVIDER_57)
+
+    # 1. Urgent Jobs Queue Check
+    pending_files = engine.check_pending_urgent_files()
+    if pending_files:
+        print(f" {ACCENT}[!] URGENT JOBS PENDING ({len(pending_files)}):{RESET}")
+        for pf in pending_files:
+            print(f"     • {pf}")
+        print(f"     {BOLD}Directive:{RESET} Process pending job start-to-finish without stopping!")
+    else:
+        print(f" {ACCENT}[✓] Urgent Jobs Queue:{RESET} Clean (0 pending files in $JOBS_FOLDER)")
+
+    # 2. Chamber Status
+    job_id, job_name, subdir = engine.get_loaded_job_info()
+    if job_id:
+        print(f" {ACCENT}[*] Loaded Chamber:{RESET} {job_name or job_id} [{subdir}]")
+    else:
+        print(f" {ACCENT}[*] Loaded Chamber:{RESET} None (chamber unlocked)")
+
+    print(SUBDIVIDER_57)
+
+    # 3. Standing Maintenance Jobs
+    maint_jobs = engine.list_maintenance_jobs()
+    print(f" {ACCENT}STANDING MAINTENANCE JOBS ({len(maint_jobs)}):{RESET}")
+    print(f" {DIM}(Never completed; executed/verified on session start){RESET}")
+    print(SUBDIVIDER_57)
+    for j in maint_jobs:
+        run_txt = f"{j['run_count']} runs" if j['run_count'] > 0 else "never run"
+        last_dt = j['last_run_timestamp'][:10] if j.get('last_run_timestamp') else "never"
+        print(f"  [{j['priority'].upper()[:4]}] {j['job_id']}: {j['job_name']}")
+        print(f"        Skill : {j['governing_skill']}")
+        print(f"        Cmd   : {j['command_to_run'][:45]}")
+        print(f"        Status: {j['status']} | Last: {last_dt} ({run_txt}) | Result: {j['last_result']}")
+    print(DIVIDER_57)
+
+
+def emit_agent_context_json(engine: JobManagerEngine) -> None:
+    """Emit machine-readable JSON context of active jobs, maintenance jobs, and paths."""
+    context = {
+        "engine": "JobManagerEngine",
+        "version": "1.7.0",
+        "paths": {k: str(v) for k, v in engine.paths.items()},
+        "loaded_chamber": {
+            "job_id": engine.get_loaded_job_info()[0],
+            "job_name": engine.get_loaded_job_info()[1],
+            "subdir": engine.get_loaded_job_info()[2],
+        },
+        "pending_urgent_files": engine.check_pending_urgent_files(),
+        "active_jobs": engine.list_active_jobs(),
+        "maintenance_jobs": engine.list_maintenance_jobs(),
+    }
+    print(json.dumps(context, indent=2))
+
+
+def print_ai_optimized_help() -> None:
+    """Print high-density, structured, AI-optimized command specification."""
+    print(DIVIDER_57)
+    print(f" {ACCENT}JOB MANAGEMENT TOOL - AI-OPTIMIZED COMMAND SPECIFICATION{RESET}")
+    print(SUBDIVIDER_57)
+    print("ENTRYPOINTS:")
+    print("  python3 /storage/emulated/0/Admin/System/tools/management_tool/job_tool.py [FLAGS]")
+    print("  bash /storage/emulated/0/Admin/System/tools/management_tool/management.sh job [FLAGS]")
+    print()
+    print(f"{ACCENT}PHASE 0: SESSION INIT & STANDING MAINTENANCE (Never Completed){RESET}")
+    print("  --init-check                 Composite startup check: urgent jobs + maint")
+    print("  --maintenance                List all standing maintenance jobs")
+    print("  --query-maintenance <TERM>   Search maintenance jobs by keyword or skill")
+    print("  --record-maintenance <ID>    Record run timestamp and increment run count")
+    print("  --maintenance-result <CODE>  Result status (verified|clean|drift_detected)")
+    print()
+    print(f"{ACCENT}PHASE 1: DISCOVERY & REGISTRY QUERIES{RESET}")
+    print("  --list, -l                   List active queued jobs in registry")
+    print("  --list-completed             List archived completed jobs in registry")
+    print("  --list-saved                 List draft/saved job files")
+    print("  --query, -q <TERM>           Search active and completed registries")
+    print("  --status                     Print 57-column chamber status banner")
+    print()
+    print(f"{ACCENT}PHASE 2: LOADED CHAMBER TARGET LOCK{RESET}")
+    print("  --select, -s <TARGET>        Lock chamber by index, ID, or job name")
+    print("  --clear                      Clear loaded chamber target lock")
+    print()
+    print(f"{ACCENT}PHASE 3: EXECUTION ON LOADED CHAMBER{RESET}")
+    print("  --view                       View full job card with instructions & tasks")
+    print("  --set-priority <LEVEL>       urgent | high | normal | low")
+    print("  --set-status <STATUS>        active | inactive | pending | paused")
+    print("  --activate                   Move to active queue & $JOBS_FOLDER")
+    print("  --deactivate                 Move to inactive & saved_jobs/")
+    print("  --add-task <TITLE>           Append task to loaded job")
+    print("  --task-desc <TEXT>           Description for new task")
+    print("  --toggle-task <ORDER|ID>     Toggle step completion status")
+    print("  --complete-job               Archive to $COMPLETED_JOBS_FOLDER & update registry")
+    print("  -m, --summary <TEXT>         Resolution summary for completed job")
+    print("  --artifacts <PATHS>          Comma-separated artifact paths produced")
+    print()
+    print(f"{ACCENT}PHASE 4: CREATION & INGESTION{RESET}")
+    print("  --new -n <NAME>              Create new job (requires -n/--name)")
+    print("  -i <INSTRUCTIONS>            Job execution instructions")
+    print("  --notes <CONTEXT>            Context notes, paths, constraints")
+    print("  --priority <LEVEL>           Job priority (default: normal)")
+    print("  --tasks <T1,T2,...>          Comma-separated initial task list")
+    print("  --migrate-legacy             Ingest loose completed files into registry")
+    print()
+    print(f"{ACCENT}AI CONTEXT DIRECTIVES:{RESET}")
+    print("  --agent-context, --ai-help   Emit machine-readable JSON context state")
+    print(DIVIDER_57)
+
+
 # ── CLI Parser ───────────────────────────────────────────────────────────────
 def build_argument_parser() -> argparse.ArgumentParser:
     """Construct CLI argument parser for Job Manager."""
@@ -880,6 +1123,15 @@ def build_argument_parser() -> argparse.ArgumentParser:
         description="Authoritative BEJSON 104a Job Manager & Registry CLI (Mode 4).",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+
+    # Phase 0: Session Init & Maintenance
+    maint_grp = parser.add_argument_group("Phase 0: Session Initialization & Maintenance (Standing)")
+    maint_grp.add_argument("--maintenance", "--list-maintenance", action="store_true", help="List standing recurring maintenance jobs (never completed)")
+    maint_grp.add_argument("--query-maintenance", metavar="TERM", help="Search standing maintenance jobs by keyword or skill")
+    maint_grp.add_argument("--record-maintenance", metavar="JOB_ID", help="Record verified execution of a maintenance job (updates run count & timestamp)")
+    maint_grp.add_argument("--maintenance-result", default="verified", help="Result code for maintenance record (default: verified)")
+    maint_grp.add_argument("--init-check", action="store_true", help="Composite session startup check: urgent jobs, staged downloads, & standing maintenance")
+    maint_grp.add_argument("--agent-context", "--ai-help", action="store_true", help="Emit high-density AI-optimized context & command specification")
 
     # Discovery
     disc_grp = parser.add_argument_group("Phase 1: Discovery")
@@ -927,6 +1179,15 @@ def build_argument_parser() -> argparse.ArgumentParser:
 def main() -> int:
     """Execute Job Manager CLI routine."""
     engine = JobManagerEngine()
+
+    if any(h in sys.argv[1:] for h in ("-h", "--help")):
+        print_ai_optimized_help()
+        return 0
+
+    if any(a in sys.argv[1:] for a in ("--agent-context", "--ai-help")):
+        emit_agent_context_json(engine)
+        return 0
+
     parser = build_argument_parser()
     args = parser.parse_args()
 
@@ -934,8 +1195,41 @@ def main() -> int:
     if len(sys.argv) == 1:
         print_status_banner(engine)
         print()
-        parser.print_help()
+        print_ai_optimized_help()
         return 0
+
+    # 0. Session Initialization & Maintenance
+    if args.init_check:
+        print_init_check(engine)
+        return 0
+
+    if args.maintenance:
+        jobs = engine.list_maintenance_jobs()
+        print_maintenance_jobs_table(jobs)
+        return 0
+
+    if args.query_maintenance:
+        jobs = engine.query_maintenance_jobs(args.query_maintenance)
+        print_maintenance_jobs_table(jobs)
+        return 0
+
+    if args.record_maintenance:
+        rec = engine.record_maintenance_run(args.record_maintenance, result=args.maintenance_result)
+        if rec:
+            print(DIVIDER_57)
+            print(f" {ACCENT}[✓] MAINTENANCE RUN RECORDED (STANDING){RESET}")
+            print(SUBDIVIDER_57)
+            print(f" {ACCENT}Job ID:{RESET}     {rec['job_id']}")
+            print(f" {ACCENT}Job Name:{RESET}   {rec['job_name']}")
+            print(f" {ACCENT}Status:{RESET}     [{rec['status'].upper()}] (perpetual standing)")
+            print(f" {ACCENT}Run Count:{RESET}  {rec['run_count']}")
+            print(f" {ACCENT}Timestamp:{RESET}  {rec['last_run_timestamp']}")
+            print(f" {ACCENT}Result:{RESET}     {rec['last_result']}")
+            print(DIVIDER_57)
+            return 0
+        else:
+            print(f"{ACCENT}[✗] Error:{RESET} Maintenance job '{args.record_maintenance}' not found in registry.", file=sys.stderr)
+            return 1
 
     # 1. Status & Discovery
     if args.status:

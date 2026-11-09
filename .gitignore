@@ -44,6 +44,14 @@ reports/
 exports/log_reports/
 exports/*.html
 
+# 4. Jobs: runtime job queues, completed archives, and dynamic registries
+data/jobs/
+data/completed_jobs/
+data/saved_jobs/
+data/job_registry.104a.bejson
+data/completed_jobs_registry.104a.bejson
+
+
 # Runtime state caches (Loaded Chamber)
 config/state.json
 state.json

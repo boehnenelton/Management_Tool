@@ -111,41 +111,42 @@ def print_unified_status() -> None:
 
 
 def print_help_guide() -> None:
-    """Print main router help menu."""
+    """Print AI-optimized command specification and context delivery."""
     print("=" * 57)
-    print(f" {ACCENT}SYSTEM MANAGEMENT TOOL - COMMAND ROUTER{RESET}")
+    print(f" {ACCENT}SYSTEM MANAGEMENT TOOL - AI-OPTIMIZED AGENT GUIDE{RESET}")
     print("-" * 57)
-    print("Usage: management_tool.py [mode_option | router_command | flags]")
+    print("USAGE SYNTAX:")
+    print("  python3 management_tool.py <subsystem|flags> [args...]")
+    print("  bash /storage/emulated/0/Admin/System/tools/management_tool/management.sh <subsystem|flags> [args...]")
     print()
-    print(f"{ACCENT}Mode Configuration:{RESET}")
-    print("  --select-mode <1|2|3|4|logging|reports|notes|jobs>             Switch active mode")
-    print("  --list-modes                                                   Display supported modes")
-    print("  --status                                                       Print unified chamber status")
+    print(f"{ACCENT}SESSION STARTUP & MAINTENANCE DIRECTIVES:{RESET}")
+    print("  • Composite Init Check:  python3 management_tool.py job --init-check")
+    print("  • Query Maintenance:     python3 management_tool.py job --maintenance")
+    print("  • Record Maint Run:      python3 management_tool.py job --record-maintenance <id>")
+    print("  • AI Context JSON:       python3 management_tool.py --agent-context")
     print()
-    print(f"{ACCENT}Direct Subsystem Routing:{RESET}")
-    print("  management_tool.py log [args...]      Directly route to logging tool")
-    print("  management_tool.py report [args...]   Directly route to report indexer")
-    print("  management_tool.py note [args...]     Directly route to notes tool")
-    print("  management_tool.py job [args...]      Directly route to job manager")
-    print("  management_tool.py tax [args...]      Route to Taxonomy Cartographer (Admin/Dev/Tools)")
+    print(f"{ACCENT}SUBSYSTEM ROUTING:{RESET}")
+    print("  job    Stateful Job Chamber, Queues & Maintenance (Mode 4)")
+    print("  log    BEJSON 105 Standardized Logging Tool (Mode 1)")
+    print("  note   Notes & MFDB Notebook Manager (Mode 3)")
+    print("  report Research Papers Tracking & Indexer (Mode 2)")
+    print("  tax    Taxonomy Cartographer (Mode 5)")
     print()
-    print(f"{ACCENT}Mode 4 (Job Management) Direct Flags:{RESET}")
-    print("  --list-saved, --list-deployed, --select-job <id>, --new <name>")
-    print("  --add-task \"<title>\", --toggle-task <idx>, --deploy, --view")
+    print(f"{ACCENT}SUBSYSTEM QUICK CLI MATRIX:{RESET}")
+    print("  [job]    --list | --list-completed | --query <term>")
+    print("           --select <id> | --view | --add-task <t> | --toggle-task <idx>")
+    print("           --complete-job -m <summary> | --new -n <name> -i <instructions>")
+    print("           --maintenance | --init-check | --record-maintenance <id>")
+    print("  [log]    write -m \"<msg>\" [-l <level>] [-s <subsystem>]")
+    print("           read [--min-level <lvl>] [--since <iso|today>]")
+    print("  [note]   --list-notes | --select-note | --note-new | --web")
+    print("  [report] --list-entries | --query <term> | --action-view")
+    print("  [tax]    --map | --signatures | --ast | --scan")
     print()
-    print(f"{ACCENT}Mode 3 (Notes Management) Direct Flags:{RESET}")
-    print("  --list-notes, --select-note, --note-new, --note-edit, --note-delete")
-    print("  --category-create, --category-edit, --category-delete, --set-category")
-    print("  --add-tag, --remove-tag, --export, --import <file.md>, --web")
-    print()
-    print(f"{ACCENT}Mode 2 (Reports Tracking) Direct Flags:{RESET}")
-    print("  --list-categories, --list-entries, --select-category, --select-entry")
-    print("  --import <file.md> [--category <cat>] [--name <filename.md>]")
-    print("  --action-view, --action-pull, --action-delete, --query <term>")
-    print()
-    print(f"{ACCENT}Mode 1 (Logging) Direct Flags:{RESET}")
-    print("  write -m \"<msg>\" [-l <level>] [-k <key>] [-s <subsystem>]")
-    print("  read [--min-level <lvl>] [--since <iso>]")
+    print(f"{ACCENT}MODE CONFIGURATION:{RESET}")
+    print("  --select-mode <1|2|3|4|5>   Switch active persistent mode")
+    print("  --list-modes                Display supported modes")
+    print("  --status                    Display 57-column chamber status")
     print("=" * 57)
 
 
@@ -159,6 +160,14 @@ def main() -> int:
         return 0
 
     first_argument: str = arguments[0].strip().lower()
+
+    # 0. AI Context & Universal Help Interception
+    if first_argument in ("-h", "--help", "help"):
+        print_help_guide()
+        return 0
+
+    if first_argument in ("--agent-context", "--ai-help"):
+        return forward_command(JOB_TOOL_PATH, ["--agent-context"])
 
     # 1. Direct subsystem routing: 'log', 'report', 'note', 'taxonomy', or 'job'
     if first_argument in ("log", "logging"):
@@ -216,7 +225,7 @@ def main() -> int:
     active_mode = state.get("active_mode", "reports")
 
     # If job-specific flags passed -> route to job_tool
-    if any(arg in ("--deploy", "--list-deployed", "--list-saved", "--list-completed") or arg.startswith("--select-job") or arg.startswith("--add-task") or arg.startswith("--toggle-task") or arg in ("--new", "--create-job", "--show-chamber", "--clear-job") for arg in arguments):
+    if any(arg in ("--deploy", "--list-deployed", "--list-saved", "--list-completed", "--maintenance", "--list-maintenance", "--init-check") or arg.startswith("--select-job") or arg.startswith("--add-task") or arg.startswith("--toggle-task") or arg.startswith("--record-maintenance") or arg.startswith("--query-maintenance") or arg in ("--new", "--create-job", "--show-chamber", "--clear-job") for arg in arguments):
         return forward_command(JOB_TOOL_PATH, arguments)
 
     # If taxonomy-specific flags passed -> route to taxonomy_cartographer
