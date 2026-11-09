@@ -22,6 +22,7 @@ LOGGING_TOOL_PATH: Path = SCRIPT_DIR / "logging_tool.py"
 REPORT_INDEXER_PATH: Path = SCRIPT_DIR / "report_indexer.py"
 NOTES_TOOL_PATH: Path = SCRIPT_DIR / "notes_tool.py"
 JOB_TOOL_PATH: Path = SCRIPT_DIR / "job_tool.py"
+REMINDER_TOOL_PATH: Path = Path("/storage/emulated/0/Admin/System/tools/reminder_tool/reminder_tool.py")
 TAXONOMY_CARTOGRAPHER_PATH: Path = Path("/storage/emulated/0/Admin/Dev/Tools/Taxonomy_Cartographer/taxonomy_cartographer.py")
 STATE_FILE_PATH: Path = CONFIG_DIR / "state.json"
 
@@ -49,9 +50,13 @@ SUPPORTED_MODES: Dict[str, str] = {
     "4": "jobs",
     "job": "jobs",
     "jobs": "jobs",
-    "5": "taxonomy",
+    "5": "reminders",
+    "remind": "reminders",
+    "reminder": "reminders",
+    "reminders": "reminders",
+    "6": "taxonomy",
     "taxonomy": "taxonomy",
-    "cartography": "taxonomy"
+    "cartography": "taxonomy",
 }
 
 
@@ -107,6 +112,8 @@ def print_unified_status() -> None:
     print("  • [2] Reports:   Research Papers Tracking & Indexer")
     print("  • [3] Notes:     Categorized Notes & MFDB Notebook Manager")
     print("  • [4] Jobs:      Stateful Job Chamber & Urgent Deployment Manager")
+    print("  • [5] Reminders: Termux Launch Reminders & Active Tasks")
+    print("  • [6] Taxonomy:  Taxonomy Cartographer (Admin/Dev/Tools)")
     print("=" * 57)
 
 
@@ -123,16 +130,20 @@ def print_help_guide() -> None:
     print("  • Composite Init Check:  python3 management_tool.py job --init-check")
     print("  • Query Maintenance:     python3 management_tool.py job --maintenance")
     print("  • Record Maint Run:      python3 management_tool.py job --record-maintenance <id>")
+    print("  • Print Reminders:       python3 management_tool.py remind print")
     print("  • AI Context JSON:       python3 management_tool.py --agent-context")
     print()
     print(f"{ACCENT}SUBSYSTEM ROUTING:{RESET}")
+    print("  remind Termux Launch Reminders & Active Tasks (Mode 5)")
     print("  job    Stateful Job Chamber, Queues & Maintenance (Mode 4)")
     print("  log    BEJSON 105 Standardized Logging Tool (Mode 1)")
     print("  note   Notes & MFDB Notebook Manager (Mode 3)")
     print("  report Research Papers Tracking & Indexer (Mode 2)")
-    print("  tax    Taxonomy Cartographer (Mode 5)")
+    print("  tax    Taxonomy Cartographer (Mode 6)")
     print()
     print(f"{ACCENT}SUBSYSTEM QUICK CLI MATRIX:{RESET}")
+    print("  [remind] add <text...> [-p <priority>] | done <id|idx>")
+    print("           list | completed | print | --json")
     print("  [job]    --list | --list-completed | --query <term>")
     print("           --select <id> | --view | --add-task <t> | --toggle-task <idx>")
     print("           --complete-job -m <summary> | --new -n <name> -i <instructions>")
@@ -144,7 +155,7 @@ def print_help_guide() -> None:
     print("  [tax]    --map | --signatures | --ast | --scan")
     print()
     print(f"{ACCENT}MODE CONFIGURATION:{RESET}")
-    print("  --select-mode <1|2|3|4|5>   Switch active persistent mode")
+    print("  --select-mode <1|2|3|4|5|6> Switch active persistent mode")
     print("  --list-modes                Display supported modes")
     print("  --status                    Display 57-column chamber status")
     print("=" * 57)
@@ -185,14 +196,17 @@ def main() -> int:
     if first_argument in ("job", "jobs", "jobmaker"):
         return forward_command(JOB_TOOL_PATH, arguments[1:])
 
+    if first_argument in ("remind", "reminders", "reminder"):
+        return forward_command(REMINDER_TOOL_PATH, arguments[1:])
+
     # 2. Mode management
     if first_argument in ("--select-mode", "-m"):
         if len(arguments) < 2:
-            print(f"{ACCENT}[✗] Error:{RESET} Mode value required (1/logging, 2/reports, 3/notes, 4/taxonomy, or 5/jobs).", file=sys.stderr)
+            print(f"{ACCENT}[✗] Error:{RESET} Mode value required (1/logging, 2/reports, 3/notes, 4/jobs, 5/reminders, or 6/taxonomy).", file=sys.stderr)
             return 1
         mode_token = arguments[1].strip().lower()
         if mode_token not in SUPPORTED_MODES:
-            print(f"{ACCENT}[✗] Error:{RESET} Invalid mode '{mode_token}'. Allowed: 1, 2, 3, 4, or 5.", file=sys.stderr)
+            print(f"{ACCENT}[✗] Error:{RESET} Invalid mode '{mode_token}'. Allowed: 1, 2, 3, 4, 5, or 6.", file=sys.stderr)
             return 1
         chosen_mode = SUPPORTED_MODES[mode_token]
         state = load_shared_state()
@@ -212,7 +226,8 @@ def main() -> int:
         print(f" [{ACCENT}2{RESET}] reports   - Research Papers Tracking & Indexing")
         print(f" [{ACCENT}3{RESET}] notes     - Categorized Notes & MFDB Notebook Manager")
         print(f" [{ACCENT}4{RESET}] jobs      - Stateful Job Chamber & Urgent Deployment Manager")
-        print(f" [{ACCENT}* {RESET}] taxonomy  - External: Admin/Dev/Tools/Taxonomy_Cartographer")
+        print(f" [{ACCENT}5{RESET}] reminders - Termux Launch Reminders & Active Tasks")
+        print(f" [{ACCENT}6{RESET}] taxonomy  - External: Admin/Dev/Tools/Taxonomy_Cartographer")
         print("=" * 57)
         return 0
 
@@ -223,6 +238,10 @@ def main() -> int:
     # 3. Transparent Delegation based on Active Mode or Explicit Flags
     state = load_shared_state()
     active_mode = state.get("active_mode", "reports")
+
+    # If reminder flags passed -> route to reminder_tool
+    if any(arg in ("--print-termux", "print", "launch") for arg in arguments):
+        return forward_command(REMINDER_TOOL_PATH, arguments)
 
     # If job-specific flags passed -> route to job_tool
     if any(arg in ("--deploy", "--list-deployed", "--list-saved", "--list-completed", "--maintenance", "--list-maintenance", "--init-check") or arg.startswith("--select-job") or arg.startswith("--add-task") or arg.startswith("--toggle-task") or arg.startswith("--record-maintenance") or arg.startswith("--query-maintenance") or arg in ("--new", "--create-job", "--show-chamber", "--clear-job") for arg in arguments):
@@ -248,6 +267,8 @@ def main() -> int:
             return forward_command(NOTES_TOOL_PATH, arguments)
         if active_mode in ("job", "jobs"):
             return forward_command(JOB_TOOL_PATH, arguments)
+        if active_mode in ("remind", "reminders", "reminder"):
+            return forward_command(REMINDER_TOOL_PATH, arguments)
         return forward_command(REPORT_INDEXER_PATH, arguments)
 
     # Otherwise route to active mode tool
@@ -259,6 +280,8 @@ def main() -> int:
         target_tool = TAXONOMY_CARTOGRAPHER_PATH
     elif active_mode in ("job", "jobs"):
         target_tool = JOB_TOOL_PATH
+    elif active_mode in ("remind", "reminders", "reminder"):
+        target_tool = REMINDER_TOOL_PATH
     else:
         target_tool = REPORT_INDEXER_PATH
     return forward_command(target_tool, arguments)
