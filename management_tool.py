@@ -30,15 +30,38 @@ if str(LIB_DIR) not in sys.path:
     sys.path.insert(0, str(LIB_DIR))
 
 # Policy §8.1 Tri-Color Palette
-COLOR_HEX_RED: str = "\033[38;2;222;38;38m"
-COLOR_ANSI_RED: str = "\033[1;31m"
+COLOR_HEX_RED: str = "\033[38;2;222;38;38m"  # Policy §8.1 #DE2626 Truecolor
+COLOR_ANSI_RED: str = "\033[1;31m"          # ANSI Bold Red fallback
 COLOR_RESET: str = "\033[0m"
+COLOR_WHITE: str = "\033[1;37m"             # Bright White
+COLOR_NEUTRAL: str = "\033[0;37m"           # Standard White
+COLOR_DIM: str = "\033[2m"
 
 NO_COLOR: bool = os.getenv("NO_COLOR") is not None
 COLORTERM: str = os.getenv("COLORTERM", "").lower()
 SUPPORTS_TRUECOLOR: bool = "truecolor" in COLORTERM or "24bit" in COLORTERM
-ACCENT: str = (COLOR_HEX_RED if SUPPORTS_TRUECOLOR else COLOR_ANSI_RED) if not NO_COLOR and sys.stdout.isatty() else ""
-RESET: str = COLOR_RESET if not NO_COLOR and sys.stdout.isatty() else ""
+IS_TTY: bool = sys.stdout.isatty() or sys.stderr.isatty()
+
+ACCENT: str = (COLOR_HEX_RED if SUPPORTS_TRUECOLOR else COLOR_ANSI_RED) if not NO_COLOR and IS_TTY else ""
+WHITE: str = COLOR_WHITE if not NO_COLOR and IS_TTY else ""
+NEUTRAL: str = COLOR_NEUTRAL if not NO_COLOR and IS_TTY else ""
+RESET: str = COLOR_RESET if not NO_COLOR and IS_TTY else ""
+DIM: str = COLOR_DIM if not NO_COLOR and IS_TTY else ""
+
+DIVIDER_57: str = "=" * 57
+SUBDIVIDER_57: str = "-" * 57
+
+
+def print_positive(message: str) -> None:
+    """Print positive status message in white lowercase."""
+    print(f"{WHITE}[✓] {message.lower()}{RESET}")
+
+
+def print_fail(message: str) -> None:
+    """Print failure error message in #DE2626 UPPERCASE RED."""
+    err_stream = sys.stderr
+    print(f"{ACCENT}[✗] {message.upper()}{RESET}", file=err_stream)
+
 
 SUPPORTED_MODES: Dict[str, str] = {
     "1": "logging",
@@ -84,7 +107,7 @@ def persist_shared_state(state_dictionary: Dict[str, Any]) -> None:
 def forward_command(target_script: Path, forward_arguments: List[str]) -> int:
     """Forward command-line invocation to dedicated subsystem script."""
     if not target_script.is_file():
-        print(f"{ACCENT}[✗] Subsystem script not found:{RESET} {target_script}", file=sys.stderr)
+        print_fail(f"SUBSYSTEM SCRIPT NOT FOUND: {target_script}")
         return 1
     command_vector: List[str] = [sys.executable, str(target_script)] + forward_arguments
     execution_result = subprocess.run(command_vector)
@@ -99,66 +122,66 @@ def print_unified_status() -> None:
     current_ent: str = state_data.get("active_entry") or "(none)"
     current_job: str = state_data.get("active_job") or "(none)"
 
-    print("=" * 57)
+    print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
     print(f" {ACCENT}SYSTEM MANAGEMENT TOOL [UNIFIED ROUTER]{RESET}")
-    print("-" * 57)
-    print(f" {ACCENT}ACTIVE MODE:{RESET}  [{current_mode}]")
-    print(f" {ACCENT}CATEGORY:{RESET}     {current_cat:<38}")
-    print(f" {ACCENT}ENTRY:{RESET}        {current_ent:<38}")
-    print(f" {ACCENT}JOB:{RESET}          {current_job:<38}")
-    print("-" * 57)
-    print(" Subsystems:")
-    print("  • [1] Logging:   BEJSON 105 Standardized Logging Tool")
-    print("  • [2] Reports:   Research Papers Tracking & Indexer")
-    print("  • [3] Notes:     Categorized Notes & MFDB Notebook Manager")
-    print("  • [4] Jobs:      Stateful Job Chamber & Urgent Deployment Manager")
-    print("  • [5] Reminders: Termux Launch Reminders & Active Tasks")
-    print("  • [6] Taxonomy:  Taxonomy Cartographer (Admin/Dev/Tools)")
-    print("=" * 57)
+    print(f"{NEUTRAL}{SUBDIVIDER_57}{RESET}")
+    print(f" {ACCENT}ACTIVE MODE:{RESET}  {WHITE}[{current_mode}]{RESET}")
+    print(f" {ACCENT}CATEGORY:{RESET}     {NEUTRAL}{current_cat:<38}{RESET}")
+    print(f" {ACCENT}ENTRY:{RESET}        {NEUTRAL}{current_ent:<38}{RESET}")
+    print(f" {ACCENT}JOB:{RESET}          {NEUTRAL}{current_job:<38}{RESET}")
+    print(f"{NEUTRAL}{SUBDIVIDER_57}{RESET}")
+    print(f" {ACCENT}Subsystems:{RESET}")
+    print(f"  • [{ACCENT}1{RESET}] {ACCENT}Logging:{RESET}   {NEUTRAL}BEJSON 105 Standardized Logging Tool{RESET}")
+    print(f"  • [{ACCENT}2{RESET}] {ACCENT}Reports:{RESET}   {NEUTRAL}Research Papers Tracking & Indexer{RESET}")
+    print(f"  • [{ACCENT}3{RESET}] {ACCENT}Notes:{RESET}     {NEUTRAL}Categorized Notes & MFDB Notebook Manager{RESET}")
+    print(f"  • [{ACCENT}4{RESET}] {ACCENT}Jobs:{RESET}      {NEUTRAL}Stateful Job Chamber & Urgent Deployment Manager{RESET}")
+    print(f"  • [{ACCENT}5{RESET}] {ACCENT}Reminders:{RESET} {NEUTRAL}Termux Launch Reminders & Active Tasks{RESET}")
+    print(f"  • [{ACCENT}6{RESET}] {ACCENT}Taxonomy:{RESET}  {NEUTRAL}Taxonomy Cartographer (Admin/Dev/Tools){RESET}")
+    print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
 
 
 def print_help_guide() -> None:
     """Print AI-optimized command specification and context delivery."""
-    print("=" * 57)
+    print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
     print(f" {ACCENT}SYSTEM MANAGEMENT TOOL - AI-OPTIMIZED AGENT GUIDE{RESET}")
-    print("-" * 57)
-    print("USAGE SYNTAX:")
-    print("  python3 management_tool.py <subsystem|flags> [args...]")
-    print("  bash /storage/emulated/0/Admin/System/tools/management_tool/management.sh <subsystem|flags> [args...]")
+    print(f"{NEUTRAL}{SUBDIVIDER_57}{RESET}")
+    print(f"{ACCENT}USAGE SYNTAX:{RESET}")
+    print(f"  {NEUTRAL}python3 management_tool.py <subsystem|flags> [args...]{RESET}")
+    print(f"  {NEUTRAL}bash /storage/emulated/0/Admin/System/tools/management_tool/management.sh <subsystem|flags> [args...]{RESET}")
     print()
     print(f"{ACCENT}SESSION STARTUP & MAINTENANCE DIRECTIVES:{RESET}")
-    print("  • Composite Init Check:  python3 management_tool.py job --init-check")
-    print("  • Query Maintenance:     python3 management_tool.py job --maintenance")
-    print("  • Record Maint Run:      python3 management_tool.py job --record-maintenance <id>")
-    print("  • Print Reminders:       python3 management_tool.py remind print")
-    print("  • AI Context JSON:       python3 management_tool.py --agent-context")
+    print(f"  • {ACCENT}Composite Init Check:{RESET}  {NEUTRAL}python3 management_tool.py job --init-check{RESET}")
+    print(f"  • {ACCENT}Query Maintenance:{RESET}     {NEUTRAL}python3 management_tool.py job --maintenance{RESET}")
+    print(f"  • {ACCENT}Record Maint Run:{RESET}      {NEUTRAL}python3 management_tool.py job --record-maintenance <id>{RESET}")
+    print(f"  • {ACCENT}Print Reminders:{RESET}       {NEUTRAL}python3 management_tool.py remind print{RESET}")
+    print(f"  • {ACCENT}AI Context JSON:{RESET}       {NEUTRAL}python3 management_tool.py --agent-context{RESET}")
     print()
     print(f"{ACCENT}SUBSYSTEM ROUTING:{RESET}")
-    print("  remind Termux Launch Reminders & Active Tasks (Mode 5)")
-    print("  job    Stateful Job Chamber, Queues & Maintenance (Mode 4)")
-    print("  log    BEJSON 105 Standardized Logging Tool (Mode 1)")
-    print("  note   Notes & MFDB Notebook Manager (Mode 3)")
-    print("  report Research Papers Tracking & Indexer (Mode 2)")
-    print("  tax    Taxonomy Cartographer (Mode 6)")
+    print(f"  {ACCENT}remind{RESET} {NEUTRAL}Termux Launch Reminders & Active Tasks (Mode 5){RESET}")
+    print(f"  {ACCENT}job{RESET}    {NEUTRAL}Stateful Job Chamber, Queues & Maintenance (Mode 4){RESET}")
+    print(f"  {ACCENT}log{RESET}    {NEUTRAL}BEJSON 105 Standardized Logging Tool (Mode 1){RESET}")
+    print(f"  {ACCENT}note{RESET}   {NEUTRAL}Notes & MFDB Notebook Manager (Mode 3){RESET}")
+    print(f"  {ACCENT}report{RESET} {NEUTRAL}Research Papers Tracking & Indexer (Mode 2){RESET}")
+    print(f"  {ACCENT}tax{RESET}    {NEUTRAL}Taxonomy Cartographer (Mode 6){RESET}")
     print()
     print(f"{ACCENT}SUBSYSTEM QUICK CLI MATRIX:{RESET}")
-    print("  [remind] add <text...> [-p <priority>] | done <id|idx>")
-    print("           list | completed | print | --json")
-    print("  [job]    --list | --list-completed | --query <term>")
-    print("           --select <id> | --view | --add-task <t> | --toggle-task <idx>")
-    print("           --complete-job -m <summary> | --new -n <name> -i <instructions>")
-    print("           --maintenance | --init-check | --record-maintenance <id>")
-    print("  [log]    write -m \"<msg>\" [-l <level>] [-s <subsystem>]")
-    print("           read [--min-level <lvl>] [--since <iso|today>]")
-    print("  [note]   --list-notes | --select-note | --note-new | --web")
-    print("  [report] --list-entries | --query <term> | --action-view")
-    print("  [tax]    --map | --signatures | --ast | --scan")
+    print(f"  [{ACCENT}remind{RESET}] {NEUTRAL}add <text...> [-p <priority>] | done <id|idx>{RESET}")
+    print(f"           {NEUTRAL}list | completed | print | --json{RESET}")
+    print(f"  [{ACCENT}job{RESET}]    {NEUTRAL}--list | --list-completed | --query <term>{RESET}")
+    print(f"           {NEUTRAL}--select <id> | --view | --add-task <t> | --toggle-task <idx>{RESET}")
+    print(f"           {NEUTRAL}--complete-job -m <summary> | --new -n <name> -i <instructions>{RESET}")
+    print(f"           {NEUTRAL}--maintenance | --init-check | --record-maintenance <id>{RESET}")
+    print(f"  [{ACCENT}log{RESET}]    {NEUTRAL}write -m \"<msg>\" [-l <level>] [-s <subsystem>]{RESET}")
+    print(f"           {NEUTRAL}read [--min-level <lvl>] [--since <iso|today>]{RESET}")
+    print(f"  [{ACCENT}note{RESET}]   {NEUTRAL}--list-notes | --select-note | --note-new | --web{RESET}")
+    print(f"  [{ACCENT}report{RESET}] {NEUTRAL}--list-entries | --query <term> | --action-view{RESET}")
+    print(f"  [{ACCENT}tax{RESET}]    {NEUTRAL}--map | --signatures | --ast | --scan{RESET}")
     print()
     print(f"{ACCENT}MODE CONFIGURATION:{RESET}")
-    print("  --select-mode <1|2|3|4|5|6> Switch active persistent mode")
-    print("  --list-modes                Display supported modes")
-    print("  --status                    Display 57-column chamber status")
-    print("=" * 57)
+    print(f"  {ACCENT}--select-mode <1-6>{RESET} {NEUTRAL}Switch active persistent mode{RESET}")
+    print(f"  {ACCENT}--list-modes{RESET}        {NEUTRAL}Display supported modes{RESET}")
+    print(f"  {ACCENT}--status{RESET}            {NEUTRAL}Display 57-column chamber status{RESET}")
+    print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
 
 
 def main() -> int:
@@ -202,11 +225,11 @@ def main() -> int:
     # 2. Mode management
     if first_argument in ("--select-mode", "-m"):
         if len(arguments) < 2:
-            print(f"{ACCENT}[✗] Error:{RESET} Mode value required (1/logging, 2/reports, 3/notes, 4/jobs, 5/reminders, or 6/taxonomy).", file=sys.stderr)
+            print_fail("MODE VALUE REQUIRED (1/LOGGING, 2/REPORTS, 3/NOTES, 4/JOBS, 5/REMINDERS, OR 6/TAXONOMY).")
             return 1
         mode_token = arguments[1].strip().lower()
         if mode_token not in SUPPORTED_MODES:
-            print(f"{ACCENT}[✗] Error:{RESET} Invalid mode '{mode_token}'. Allowed: 1, 2, 3, 4, 5, or 6.", file=sys.stderr)
+            print_fail(f"INVALID MODE '{mode_token.upper()}'. ALLOWED: 1, 2, 3, 4, 5, OR 6.")
             return 1
         chosen_mode = SUPPORTED_MODES[mode_token]
         state = load_shared_state()
@@ -215,20 +238,20 @@ def main() -> int:
         # Also sync to report_indexer state if applicable
         if chosen_mode in ("logging", "reports"):
             forward_command(REPORT_INDEXER_PATH, ["--select-mode", chosen_mode])
-        print(f"{ACCENT}[✓] Operational mode set to:{RESET} [{chosen_mode.upper()}]")
+        print_positive(f"operational mode set to: [{chosen_mode.lower()}]")
         return 0
 
     if first_argument == "--list-modes":
-        print("=" * 57)
+        print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
         print(f" {ACCENT}SUPPORTED OPERATIONAL MODES{RESET}")
-        print("-" * 57)
-        print(f" [{ACCENT}1{RESET}] logging   - BEJSON 105 Standardized Logging Tool")
-        print(f" [{ACCENT}2{RESET}] reports   - Research Papers Tracking & Indexing")
-        print(f" [{ACCENT}3{RESET}] notes     - Categorized Notes & MFDB Notebook Manager")
-        print(f" [{ACCENT}4{RESET}] jobs      - Stateful Job Chamber & Urgent Deployment Manager")
-        print(f" [{ACCENT}5{RESET}] reminders - Termux Launch Reminders & Active Tasks")
-        print(f" [{ACCENT}6{RESET}] taxonomy  - External: Admin/Dev/Tools/Taxonomy_Cartographer")
-        print("=" * 57)
+        print(f"{NEUTRAL}{SUBDIVIDER_57}{RESET}")
+        print(f" [{ACCENT}1{RESET}] {ACCENT}logging{RESET}   - {NEUTRAL}BEJSON 105 Standardized Logging Tool{RESET}")
+        print(f" [{ACCENT}2{RESET}] {ACCENT}reports{RESET}   - {NEUTRAL}Research Papers Tracking & Indexing{RESET}")
+        print(f" [{ACCENT}3{RESET}] {ACCENT}notes{RESET}     - {NEUTRAL}Categorized Notes & MFDB Notebook Manager{RESET}")
+        print(f" [{ACCENT}4{RESET}] {ACCENT}jobs{RESET}      - {NEUTRAL}Stateful Job Chamber & Urgent Deployment Manager{RESET}")
+        print(f" [{ACCENT}5{RESET}] {ACCENT}reminders{RESET} - {NEUTRAL}Termux Launch Reminders & Active Tasks{RESET}")
+        print(f" [{ACCENT}6{RESET}] {ACCENT}taxonomy{RESET}  - {NEUTRAL}External: Admin/Dev/Tools/Taxonomy_Cartographer{RESET}")
+        print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
         return 0
 
     if first_argument in ("--status", "--info", "status"):

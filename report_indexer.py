@@ -30,24 +30,26 @@ COLOR_RESET: str = "\033[0m"
 NO_COLOR: bool = os.getenv("NO_COLOR") is not None
 COLORTERM: str = os.getenv("COLORTERM", "").lower()
 SUPPORTS_TRUECOLOR: bool = "truecolor" in COLORTERM or "24bit" in COLORTERM
+COLOR_WHITE_BOLD: str = "\033[1;37m"
+COLOR_WHITE_PLAIN: str = "\033[0;37m"
+
+IS_TTY: bool = sys.stdout.isatty() or sys.stderr.isatty()
+ACCENT: str = (COLOR_HEX_RED if SUPPORTS_TRUECOLOR else COLOR_ANSI_RED) if not NO_COLOR and IS_TTY else ""
+WHITE: str = COLOR_WHITE_BOLD if not NO_COLOR and IS_TTY else ""
+NEUTRAL: str = COLOR_WHITE_PLAIN if not NO_COLOR and IS_TTY else ""
+RESET: str = COLOR_RESET if not NO_COLOR and IS_TTY else ""
 
 
-def get_accent_color() -> str:
-    """Return #DE2626 Truecolor or ANSI Red fallback."""
-    if NO_COLOR or not sys.stdout.isatty():
-        return ""
-    return COLOR_HEX_RED if SUPPORTS_TRUECOLOR else COLOR_ANSI_RED
+def print_positive(message: str) -> None:
+    """Print positive status message in white lowercase."""
+    print(f"{WHITE}[✓] {message.lower()}{RESET}")
 
 
-def get_reset_color() -> str:
-    """Return terminal reset sequence."""
-    if NO_COLOR or not sys.stdout.isatty():
-        return ""
-    return COLOR_RESET
+def print_fail(message: str) -> None:
+    """Print failure error message in #DE2626 UPPERCASE RED."""
+    err_stream = sys.stderr
+    print(f"{ACCENT}[✗] {message.upper()}{RESET}", file=err_stream)
 
-
-ACCENT: str = get_accent_color()
-RESET: str = get_reset_color()
 
 
 def build_cli_parser() -> argparse.ArgumentParser:
@@ -188,7 +190,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps({"status": "success", "active_mode": new_mode}, indent=2))
             else:
-                print(f"{ACCENT}[✓] Mode switched to:{RESET} {new_mode.upper()} (category and entry cleared)")
+                print_positive(f"mode switched to: [{new_mode.lower()}] (category and entry cleared)")
             return 0
 
         if args.list_modes:
@@ -196,12 +198,12 @@ def main() -> int:
             if args.json:
                 print(json.dumps({"modes": modes}, indent=2))
             else:
-                print("=" * 57)
+                print(f"{NEUTRAL}{'=' * 57}{RESET}")
                 print(f" {ACCENT}SUPPORTED OPERATIONAL MODES{RESET}")
-                print("-" * 57)
+                print(f"{NEUTRAL}{'-' * 57}{RESET}")
                 for item in modes:
                     print(f" [{ACCENT}{item['mode_id']}{RESET}] {item['mode_name']:<10} - {item['description']}")
-                print("=" * 57)
+                print(f"{NEUTRAL}{'=' * 57}{RESET}")
             return 0
 
         # Phase 1: Discovery
@@ -233,7 +235,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(new_state, indent=2))
             else:
-                print(f"{ACCENT}[✓] Category locked:{RESET} {args.select_category} (entry cleared)")
+                print_positive(f"category locked: {args.select_category} (entry cleared)")
             return 0
 
         if args.select_entry:
@@ -242,7 +244,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps({"state": new_state, "entry": loaded}, indent=2))
             else:
-                print(f"{ACCENT}[✓] Entry locked into chamber:{RESET} {args.select_entry}")
+                print_positive(f"entry locked into chamber: {args.select_entry}")
                 if loaded and engine.get_active_mode() == "reports":
                     print(f"    Title:    {loaded.get('doc_title')}")
                     print(f"    Category: {loaded.get('category_name')}")
@@ -254,7 +256,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(new_state, indent=2))
             else:
-                print(f"{ACCENT}[*] Active category and entry cleared.{RESET}")
+                print_positive("active category and entry cleared.")
             return 0
 
         if args.clear_entry:
@@ -262,7 +264,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(new_state, indent=2))
             else:
-                print(f"{ACCENT}[*] Active entry unloaded from chamber.{RESET}")
+                print_positive("active entry unloaded from chamber.")
             return 0
 
         if args.clear_all:
@@ -270,7 +272,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(new_state, indent=2))
             else:
-                print(f"{ACCENT}[*] Entire chamber context cleared.{RESET}")
+                print_positive("entire chamber context cleared.")
             return 0
 
         if args.status:
@@ -294,7 +296,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(result, indent=2))
             else:
-                print(f"{ACCENT}[✓] Document imported successfully!{RESET}")
+                print_positive("document imported successfully!")
                 print(f"    Doc ID:      {result['doc_id']}")
                 print(f"    Category:    {result['category']}")
                 print(f"    File:        {result['file_name']}")
@@ -335,10 +337,10 @@ def main() -> int:
                 print(json.dumps(result, indent=2))
             else:
                 if result.get("destination_path"):
-                    print(f"{ACCENT}[✓] Document pulled to:{RESET} {result['destination_path']}")
+                    print_positive(f"document pulled to: {result['destination_path']}")
                 else:
                     clip_msg = "Path copied to Termux clipboard!" if result.get("path_copied_to_clipboard") else ""
-                    print(f"{ACCENT}[✓] Document ready:{RESET} {result['source_path']} {clip_msg}")
+                    print_positive(f"document ready: {result['source_path']} {clip_msg}")
             return 0
 
         if args.action_edit:
@@ -357,7 +359,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(result, indent=2))
             else:
-                print(f"{ACCENT}[✓] Document '{result['deleted_entry_id']}' destroyed.{RESET}")
+                print_positive(f"document '{result['deleted_entry_id']}' destroyed.")
                 print(f"    File removed: {result['file_deleted']}")
                 print(f"{ACCENT}[*] Chamber Status:{RESET} Active entry nullified to prevent ghost actions.")
             return 0
@@ -370,7 +372,8 @@ def main() -> int:
         if args.json:
             print(json.dumps({"error": str(execution_error)}, indent=2))
         else:
-            print(f"{ACCENT}[✗] Error:{RESET} {execution_error}", file=sys.stderr)
+            print_fail(f"{execution_error}")
+        return 1
         return 1
 
 

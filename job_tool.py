@@ -55,18 +55,35 @@ COLOR_ANSI_RED: str = "\033[1;31m"          # ANSI Bold Red fallback
 COLOR_RESET: str = "\033[0m"
 COLOR_DIM: str = "\033[2m"
 COLOR_BOLD: str = "\033[1m"
+COLOR_WHITE_BOLD: str = "\033[1;37m"
+COLOR_WHITE_PLAIN: str = "\033[0;37m"
 
 NO_COLOR: bool = os.getenv("NO_COLOR") is not None
 COLORTERM: str = os.getenv("COLORTERM", "").lower()
 SUPPORTS_TRUECOLOR: bool = "truecolor" in COLORTERM or "24bit" in COLORTERM
+IS_TTY: bool = sys.stdout.isatty() or sys.stderr.isatty()
 
-ACCENT: str = (COLOR_HEX_RED if SUPPORTS_TRUECOLOR else COLOR_ANSI_RED) if not NO_COLOR and sys.stdout.isatty() else ""
-RESET: str = COLOR_RESET if not NO_COLOR and sys.stdout.isatty() else ""
-DIM: str = COLOR_DIM if not NO_COLOR and sys.stdout.isatty() else ""
-BOLD: str = COLOR_BOLD if not NO_COLOR and sys.stdout.isatty() else ""
+ACCENT: str = (COLOR_HEX_RED if SUPPORTS_TRUECOLOR else COLOR_ANSI_RED) if not NO_COLOR and IS_TTY else ""
+RESET: str = COLOR_RESET if not NO_COLOR and IS_TTY else ""
+DIM: str = COLOR_DIM if not NO_COLOR and IS_TTY else ""
+BOLD: str = COLOR_BOLD if not NO_COLOR and IS_TTY else ""
+WHITE: str = COLOR_WHITE_BOLD if not NO_COLOR and IS_TTY else ""
+NEUTRAL: str = COLOR_WHITE_PLAIN if not NO_COLOR and IS_TTY else ""
 
 DIVIDER_57: str = "=" * 57
 SUBDIVIDER_57: str = "-" * 57
+
+
+def print_positive(message: str) -> None:
+    """Print positive status message in white lowercase."""
+    print(f"{WHITE}[✓] {message.lower()}{RESET}")
+
+
+def print_fail(message: str) -> None:
+    """Print failure error message in #DE2626 UPPERCASE RED."""
+    err_stream = sys.stderr
+    print(f"{ACCENT}[✗] {message.upper()}{RESET}", file=err_stream)
+
 
 # ── Canonical Environment Resolution (Policy §4.5) ───────────────────────────
 DEFINITIONS_STORE_PATH: Path = Path("/storage/emulated/0/.env/user/definitions.json")
@@ -1013,12 +1030,12 @@ def print_init_check(engine: JobManagerEngine) -> None:
     # 1. Urgent Jobs Queue Check
     pending_files = engine.check_pending_urgent_files()
     if pending_files:
-        print(f" {ACCENT}[!] URGENT JOBS PENDING ({len(pending_files)}):{RESET}")
+        print_fail(f"URGENT JOBS PENDING ({len(pending_files)}):")
         for pf in pending_files:
-            print(f"     • {pf}")
-        print(f"     {BOLD}Directive:{RESET} Process pending job start-to-finish without stopping!")
+            print(f"     • {pf}", file=sys.stderr)
+        print(f"     Directive: Process pending job start-to-finish without stopping!", file=sys.stderr)
     else:
-        print(f" {ACCENT}[✓] Urgent Jobs Queue:{RESET} Clean (0 pending files in $JOBS_FOLDER)")
+        print_positive("urgent jobs queue: clean (0 pending files in $jobs_folder)")
 
     # 2. Chamber Status
     job_id, job_name, subdir = engine.get_loaded_job_info()
@@ -1216,19 +1233,18 @@ def main() -> int:
     if args.record_maintenance:
         rec = engine.record_maintenance_run(args.record_maintenance, result=args.maintenance_result)
         if rec:
-            print(DIVIDER_57)
-            print(f" {ACCENT}[✓] MAINTENANCE RUN RECORDED (STANDING){RESET}")
-            print(SUBDIVIDER_57)
-            print(f" {ACCENT}Job ID:{RESET}     {rec['job_id']}")
-            print(f" {ACCENT}Job Name:{RESET}   {rec['job_name']}")
-            print(f" {ACCENT}Status:{RESET}     [{rec['status'].upper()}] (perpetual standing)")
-            print(f" {ACCENT}Run Count:{RESET}  {rec['run_count']}")
-            print(f" {ACCENT}Timestamp:{RESET}  {rec['last_run_timestamp']}")
-            print(f" {ACCENT}Result:{RESET}     {rec['last_result']}")
-            print(DIVIDER_57)
+            print_positive("maintenance run recorded (standing)")
+            print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
+            print(f" {ACCENT}Job ID:{RESET}     {NEUTRAL}{rec['job_id']}{RESET}")
+            print(f" {ACCENT}Job Name:{RESET}   {NEUTRAL}{rec['job_name']}{RESET}")
+            print(f" {ACCENT}Status:{RESET}     {NEUTRAL}[{rec['status'].upper()}] (perpetual standing){RESET}")
+            print(f" {ACCENT}Run Count:{RESET}  {NEUTRAL}{rec['run_count']}{RESET}")
+            print(f" {ACCENT}Timestamp:{RESET}  {NEUTRAL}{rec['last_run_timestamp']}{RESET}")
+            print(f" {ACCENT}Result:{RESET}     {NEUTRAL}{rec['last_result']}{RESET}")
+            print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
             return 0
         else:
-            print(f"{ACCENT}[✗] Error:{RESET} Maintenance job '{args.record_maintenance}' not found in registry.", file=sys.stderr)
+            print_fail(f"MAINTENANCE JOB '{args.record_maintenance.upper()}' NOT FOUND IN REGISTRY.")
             return 1
 
     # 1. Status & Discovery
@@ -1249,51 +1265,51 @@ def main() -> int:
 
     if args.list_saved:
         files = engine.list_saved_files()
-        print(DIVIDER_57)
+        print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
         print(f" {ACCENT}SAVED DRAFT JOBS & TEMPLATES{RESET}")
-        print(SUBDIVIDER_57)
+        print(f"{NEUTRAL}{SUBDIVIDER_57}{RESET}")
         if not files:
             print(f" {DIM}No draft job files in data/saved_jobs/{RESET}")
         else:
             for f in files:
                 print(f" {f['index']:<3} {f['filename']} ({f['size']} bytes)")
-        print(DIVIDER_57)
+        print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
         return 0
 
     if args.query:
         res = engine.query_jobs(args.query)
-        print(DIVIDER_57)
+        print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
         print(f" {ACCENT}JOB QUERY RESULTS:{RESET} '{args.query}'")
-        print(SUBDIVIDER_57)
+        print(f"{NEUTRAL}{SUBDIVIDER_57}{RESET}")
         print(f" {BOLD}Active Matches ({len(res['active'])}):{RESET}")
         for j in res["active"]:
             print(f"  • [{j['priority'].upper()}] {j['job_name']} ({j['job_id']})")
         print(f" {BOLD}Completed Matches ({len(res['completed'])}):{RESET}")
         for j in res["completed"]:
             print(f"  • {j['job_name']} - {j['resolution_summary'][:30]} ({j['completion_date'][:10]})")
-        print(DIVIDER_57)
+        print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
         return 0
 
     # 2. Chamber Selection & Clearing
     if args.select:
         match = engine.select_job(args.select)
         if match:
-            print(f"{ACCENT}[✓] Chamber Locked:{RESET} {match.get('job_name', match.get('filename'))}")
+            print_positive(f"chamber locked: {match.get('job_name', match.get('filename'))}")
             print_status_banner(engine)
             return 0
         else:
-            print(f"{ACCENT}[✗] Error:{RESET} No job matched query '{args.select}'.", file=sys.stderr)
+            print_fail(f"NO JOB MATCHED QUERY '{args.select.upper()}'.")
             return 1
 
     if args.clear:
         engine.clear_chamber()
-        print(f"{ACCENT}[✓] Chamber target cleared.{RESET}")
+        print_positive("chamber target cleared.")
         return 0
 
     # 3. Creation
     if args.new:
         if not args.name:
-            print(f"{ACCENT}[✗] Error:{RESET} Flag -n/--name is required to create a new job.", file=sys.stderr)
+            print_fail("FLAG -N/--NAME IS REQUIRED TO CREATE A NEW JOB.")
             return 1
 
         t_list = [t.strip() for t in args.tasks.split(",") if t.strip()] if args.tasks else []
@@ -1306,7 +1322,7 @@ def main() -> int:
             tasks=t_list,
             tags=args.tags or "",
         )
-        print(f"{ACCENT}[✓] Created and locked into chamber:{RESET} {created['job_name']} ({created['job_id']})")
+        print_positive(f"created and locked into chamber: {created['job_name']} ({created['job_id']})")
         loaded = engine.get_loaded_job_record()
         if loaded:
             print_job_card(loaded)
@@ -1316,7 +1332,7 @@ def main() -> int:
     if args.view:
         rec = engine.get_loaded_job_record()
         if not rec:
-            print(f"{ACCENT}[✗] Error:{RESET} No job loaded in chamber. Use --select <id> first.", file=sys.stderr)
+            print_fail("NO JOB LOADED IN CHAMBER. USE --SELECT <ID> FIRST.")
             return 1
         print_job_card(rec)
         return 0
@@ -1325,61 +1341,61 @@ def main() -> int:
     if args.set_status:
         success = engine.set_job_status(args.set_status)
         if success:
-            print(f"{ACCENT}[✓] Job status updated to:{RESET} [{args.set_status.upper()}]")
+            print_positive(f"job status updated to: [{args.set_status.lower()}]")
             print_status_banner(engine)
             return 0
-        print(f"{ACCENT}[✗] Error:{RESET} Could not update status. Check loaded chamber.", file=sys.stderr)
+        print_fail("COULD NOT UPDATE STATUS. CHECK LOADED CHAMBER.")
         return 1
 
     if args.activate:
         success = engine.set_job_status("active")
         if success:
-            print(f"{ACCENT}[✓] Job activated and moved to active queue!{RESET}")
+            print_positive("job activated and moved to active queue.")
             print_status_banner(engine)
             return 0
-        print(f"{ACCENT}[✗] Error:{RESET} Could not activate job. Check loaded chamber.", file=sys.stderr)
+        print_fail("COULD NOT ACTIVATE JOB. CHECK LOADED CHAMBER.")
         return 1
 
     if args.deactivate:
         success = engine.set_job_status("inactive")
         if success:
-            print(f"{ACCENT}[✓] Job deactivated and moved to saved drafts.{RESET}")
+            print_positive("job deactivated and moved to saved drafts.")
             print_status_banner(engine)
             return 0
-        print(f"{ACCENT}[✗] Error:{RESET} Could not deactivate job. Check loaded chamber.", file=sys.stderr)
+        print_fail("COULD NOT DEACTIVATE JOB. CHECK LOADED CHAMBER.")
         return 1
 
     if args.set_priority:
         success = engine.set_job_priority(args.set_priority)
         if success:
-            print(f"{ACCENT}[✓] Job priority updated to:{RESET} [{args.set_priority.upper()}]")
+            print_positive(f"job priority updated to: [{args.set_priority.lower()}]")
             print_status_banner(engine)
             return 0
-        print(f"{ACCENT}[✗] Error:{RESET} Could not update priority. Check loaded chamber.", file=sys.stderr)
+        print_fail("COULD NOT UPDATE PRIORITY. CHECK LOADED CHAMBER.")
         return 1
 
     # 6. Task Management
     if args.add_task:
         success = engine.add_task(args.add_task, args.task_desc)
         if success:
-            print(f"{ACCENT}[✓] Task added successfully:{RESET} {args.add_task}")
+            print_positive(f"task added successfully: {args.add_task}")
             rec = engine.get_loaded_job_record()
             if rec:
                 print_job_card(rec)
             return 0
-        print(f"{ACCENT}[✗] Error:{RESET} Failed to add task. Check loaded chamber.", file=sys.stderr)
+        print_fail("FAILED TO ADD TASK. CHECK LOADED CHAMBER.")
         return 1
 
     if args.toggle_task:
         state = engine.toggle_task(args.toggle_task)
         if state is not None:
-            status_text = "Completed" if state else "Pending"
-            print(f"{ACCENT}[✓] Task toggled to:{RESET} [{status_text}]")
+            status_text = "completed" if state else "pending"
+            print_positive(f"task toggled to: [{status_text}]")
             rec = engine.get_loaded_job_record()
             if rec:
                 print_job_card(rec)
             return 0
-        print(f"{ACCENT}[✗] Error:{RESET} Task '{args.toggle_task}' not found in loaded job.", file=sys.stderr)
+        print_fail(f"TASK '{args.toggle_task.upper()}' NOT FOUND IN LOADED JOB.")
         return 1
 
     # 7. Complete Job (Moving it IS marking it complete!)
@@ -1389,25 +1405,24 @@ def main() -> int:
             artifacts=args.artifacts,
         )
         if res:
-            print(DIVIDER_57)
-            print(f" {ACCENT}[✓] JOB COMPLETED & ARCHIVED{RESET}")
-            print(SUBDIVIDER_57)
-            print(f" {ACCENT}JOB:{RESET}        {res['job_name']} ({res['job_id']})")
-            print(f" {ACCENT}COMPLETED:{RESET}  {res['completion_date']}")
-            print(f" {ACCENT}RESOLUTION:{RESET} {res['resolution_summary']}")
+            print_positive(f"job completed & archived: {res['job_name']}")
+            print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
+            print(f" {ACCENT}JOB:{RESET}        {NEUTRAL}{res['job_name']} ({res['job_id']}){RESET}")
+            print(f" {ACCENT}COMPLETED:{RESET}  {NEUTRAL}{res['completion_date']}{RESET}")
+            print(f" {ACCENT}RESOLUTION:{RESET} {NEUTRAL}{res['resolution_summary']}{RESET}")
             if res.get("archive_path"):
-                print(f" {ACCENT}ARCHIVED TO:{RESET} {res['archive_path']}")
-            print(SUBDIVIDER_57)
-            print(f" {DIM}Moved from active to completed_jobs_registry.104a.bejson.{RESET}")
-            print(DIVIDER_57)
+                print(f" {ACCENT}ARCHIVED TO:{RESET} {NEUTRAL}{res['archive_path']}{RESET}")
+            print(f"{NEUTRAL}{SUBDIVIDER_57}{RESET}")
+            print(f" {DIM}moved from active to completed_jobs_registry.104a.bejson.{RESET}")
+            print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
             return 0
-        print(f"{ACCENT}[✗] Error:{RESET} Could not complete job. Check loaded chamber.", file=sys.stderr)
+        print_fail("COULD NOT COMPLETE JOB. CHECK LOADED CHAMBER.")
         return 1
 
     # 8. Legacy Migration
     if args.migrate_legacy:
         migrated = engine.migrate_legacy_completed_jobs()
-        print(f"{ACCENT}[✓] Migrated {migrated} legacy files into completed_jobs_registry.104a.bejson.{RESET}")
+        print_positive(f"migrated {migrated} legacy files into completed_jobs_registry.104a.bejson.")
         return 0
 
     return 0

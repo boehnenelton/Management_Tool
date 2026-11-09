@@ -47,18 +47,35 @@ COLOR_ANSI_RED: str = "\033[1;31m"          # ANSI Bold Red fallback
 COLOR_RESET: str = "\033[0m"
 COLOR_DIM: str = "\033[2m"
 COLOR_BOLD: str = "\033[1m"
+COLOR_WHITE_BOLD: str = "\033[1;37m"
+COLOR_WHITE_PLAIN: str = "\033[0;37m"
 
 NO_COLOR: bool = os.getenv("NO_COLOR") is not None
 COLORTERM: str = os.getenv("COLORTERM", "").lower()
 SUPPORTS_TRUECOLOR: bool = "truecolor" in COLORTERM or "24bit" in COLORTERM
 
-ACCENT: str = (COLOR_HEX_RED if SUPPORTS_TRUECOLOR else COLOR_ANSI_RED) if not NO_COLOR and sys.stdout.isatty() else ""
-RESET: str = COLOR_RESET if not NO_COLOR and sys.stdout.isatty() else ""
-DIM: str = COLOR_DIM if not NO_COLOR and sys.stdout.isatty() else ""
-BOLD: str = COLOR_BOLD if not NO_COLOR and sys.stdout.isatty() else ""
+IS_TTY: bool = sys.stdout.isatty() or sys.stderr.isatty()
+ACCENT: str = (COLOR_HEX_RED if SUPPORTS_TRUECOLOR else COLOR_ANSI_RED) if not NO_COLOR and IS_TTY else ""
+RESET: str = COLOR_RESET if not NO_COLOR and IS_TTY else ""
+DIM: str = COLOR_DIM if not NO_COLOR and IS_TTY else ""
+BOLD: str = COLOR_BOLD if not NO_COLOR and IS_TTY else ""
+WHITE: str = COLOR_WHITE_BOLD if not NO_COLOR and IS_TTY else ""
+NEUTRAL: str = COLOR_WHITE_PLAIN if not NO_COLOR and IS_TTY else ""
 
 DIVIDER_57: str = "=" * 57
 SUBDIVIDER_57: str = "-" * 57
+
+
+def print_positive(message: str) -> None:
+    """Print positive status message in white lowercase."""
+    print(f"{WHITE}[✓] {message.lower()}{RESET}")
+
+
+def print_fail(message: str) -> None:
+    """Print failure error message in #DE2626 UPPERCASE RED."""
+    err_stream = sys.stderr
+    print(f"{ACCENT}[✗] {message.upper()}{RESET}", file=err_stream)
+
 
 
 def print_status_banner(engine: NotesMFDBEngine) -> None:
@@ -248,14 +265,14 @@ def handle_export(engine: NotesMFDBEngine, dest_path: Optional[str], as_json: bo
     """Export loaded note to markdown file with #tags header."""
     loaded_note = engine.get_loaded_note()
     if not loaded_note:
-        sys.stderr.write(f"{ACCENT}[✗] Error:{RESET} No note loaded in chamber. Use --select-note first.\n")
+        print_fail("NO NOTE LOADED IN CHAMBER. USE --SELECT-NOTE FIRST.")
         return 1
 
     export_result = engine.export_note(loaded_note["note_id"], destination_path=dest_path)
     if as_json:
         print(json.dumps(export_result, indent=2))
     else:
-        print(f"{ACCENT}[✓] Exported note to:{RESET} {export_result['destination_path']}")
+        print_positive(f"exported note to: {export_result['destination_path']}")
         print(f"    Title:    {export_result['title']}")
         print(f"    Category: {export_result['category']}")
         print(f"    Tags:     {' '.join(['#' + t for t in export_result['tags']])}")
@@ -326,7 +343,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(cat, indent=2))
             else:
-                print(f"{ACCENT}[✓] Category locked into chamber:{RESET} {cat['cat_name']} (note cleared)")
+                print_positive(f"category locked into chamber: {cat['cat_name']} (note cleared)")
             return 0
 
         if args.category_create:
@@ -334,7 +351,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(new_cat, indent=2))
             else:
-                print(f"{ACCENT}[✓] Category created & locked:{RESET} {new_cat['cat_name']} (ID: {new_cat['cat_id']})")
+                print_positive(f"category created & locked: {new_cat['cat_name']} (ID: {new_cat['cat_id']})")
             return 0
 
         if args.category_edit:
@@ -346,7 +363,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(updated_cat, indent=2))
             else:
-                print(f"{ACCENT}[✓] Category updated:{RESET} {updated_cat['cat_name']} (ID: {updated_cat['cat_id']})")
+                print_positive(f"category updated: {updated_cat['cat_name']} (ID: {updated_cat['cat_id']})")
             return 0
 
         if args.category_delete:
@@ -354,7 +371,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(del_res, indent=2))
             else:
-                print(f"{ACCENT}[✓] Category deleted:{RESET} {del_res['deleted_category_name']}")
+                print_positive(f"category deleted: {del_res['deleted_category_name']}")
                 print(f"    Reassigned {del_res['reassigned_notes']} note(s) to '{del_res['reassigned_to']}'")
             return 0
 
@@ -364,7 +381,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(note_rec, indent=2))
             else:
-                print(f"{ACCENT}[✓] Note locked into chamber:{RESET} {note_rec['title']} (ID: {note_rec['note_id']})")
+                print_positive(f"note locked into chamber: {note_rec['title']} (ID: {note_rec['note_id']})")
                 print(f"    Category: {note_rec['cat_name']}")
                 print(f"    Tags:     {' '.join(['#' + t for t in note_rec['tags']]) or '(none)'}")
             return 0
@@ -375,7 +392,7 @@ def main() -> int:
             note_content: str = args.content or ""
 
             if not note_title:
-                sys.stderr.write(f"{ACCENT}[✗] Error:{RESET} Note title required (-t / --title).\n")
+                print_fail("NOTE TITLE REQUIRED (-T / --TITLE).")
                 return 1
 
             if not note_content and not sys.stdin.isatty():
@@ -391,7 +408,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(new_note, indent=2))
             else:
-                print(f"{ACCENT}[✓] Note created & locked in chamber:{RESET} {new_note['title']}")
+                print_positive(f"note created & locked in chamber: {new_note['title']}")
                 print(f"    ID:       {new_note['note_id']}")
                 print(f"    Category: {new_note['cat_name']}")
                 print(f"    Tags:     {' '.join(['#' + t for t in new_note['tags']]) or '(none)'}")
@@ -411,7 +428,7 @@ def main() -> int:
         if args.note_edit:
             target_note = engine.get_loaded_note()
             if not target_note:
-                sys.stderr.write(f"{ACCENT}[✗] Error:{RESET} No note loaded in chamber. Use --select-note first.\n")
+                print_fail("NO NOTE LOADED IN CHAMBER. USE --SELECT-NOTE FIRST.")
                 return 1
 
             edit_res = engine.update_note(
@@ -424,7 +441,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(edit_res, indent=2))
             else:
-                print(f"{ACCENT}[✓] Note updated:{RESET} {edit_res['title']}")
+                print_positive(f"note updated: {edit_res['title']}")
                 print(f"    Category: {edit_res['cat_name']}")
                 print(f"    Tags:     {' '.join(['#' + t for t in edit_res['tags']]) or '(none)'}")
             return 0
@@ -432,14 +449,14 @@ def main() -> int:
         if args.set_category:
             target_note = engine.get_loaded_note()
             if not target_note:
-                sys.stderr.write(f"{ACCENT}[✗] Error:{RESET} No note loaded in chamber. Use --select-note first.\n")
+                print_fail("NO NOTE LOADED IN CHAMBER. USE --SELECT-NOTE FIRST.")
                 return 1
 
             move_res = engine.set_note_category(target_note["note_id"], args.set_category)
             if args.json:
                 print(json.dumps(move_res, indent=2))
             else:
-                print(f"{ACCENT}[✓] Note category set to:{RESET} {move_res['cat_name']}")
+                print_positive(f"note category set to: {move_res['cat_name']}")
                 print(f"    Note: {move_res['title']} (ID: {move_res['note_id']})")
             return 0
 
@@ -447,7 +464,7 @@ def main() -> int:
         if args.add_tag:
             target_note = engine.get_loaded_note()
             if not target_note:
-                sys.stderr.write(f"{ACCENT}[✗] Error:{RESET} No note loaded in chamber. Use --select-note first.\n")
+                print_fail("NO NOTE LOADED IN CHAMBER. USE --SELECT-NOTE FIRST.")
                 return 1
 
             tags_to_add = [t.strip() for t in args.add_tag.split(",") if t.strip()]
@@ -455,14 +472,14 @@ def main() -> int:
             if args.json:
                 print(json.dumps(tag_res, indent=2))
             else:
-                print(f"{ACCENT}[✓] Added tag(s):{RESET} {', '.join(tags_to_add)}")
+                print_positive(f"added tag(s): {', '.join(tags_to_add)}")
                 print(f"    Active Tags: {' '.join(['#' + t for t in tag_res['tags']])}")
             return 0
 
         if args.remove_tag:
             target_note = engine.get_loaded_note()
             if not target_note:
-                sys.stderr.write(f"{ACCENT}[✗] Error:{RESET} No note loaded in chamber. Use --select-note first.\n")
+                print_fail("NO NOTE LOADED IN CHAMBER. USE --SELECT-NOTE FIRST.")
                 return 1
 
             tags_to_rm = [t.strip() for t in args.remove_tag.split(",") if t.strip()]
@@ -470,7 +487,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(tag_res, indent=2))
             else:
-                print(f"{ACCENT}[✓] Removed tag(s):{RESET} {', '.join(tags_to_rm)}")
+                print_positive(f"removed tag(s): {', '.join(tags_to_rm)}")
                 print(f"    Active Tags: {' '.join(['#' + t for t in tag_res['tags']]) or '(none)'}")
             return 0
 
@@ -478,14 +495,14 @@ def main() -> int:
         if args.note_delete:
             target_note = engine.get_loaded_note()
             if not target_note:
-                sys.stderr.write(f"{ACCENT}[✗] Error:{RESET} No note loaded in chamber. Use --select-note first.\n")
+                print_fail("NO NOTE LOADED IN CHAMBER. USE --SELECT-NOTE FIRST.")
                 return 1
 
             del_res = engine.delete_note(target_note["note_id"])
             if args.json:
                 print(json.dumps(del_res, indent=2))
             else:
-                print(f"{ACCENT}[✓] Note deleted:{RESET} {del_res['deleted_title']} (ID: {del_res['deleted_note_id']})")
+                print_positive(f"note deleted: {del_res['deleted_title']} (ID: {del_res['deleted_note_id']})")
                 print(f"{ACCENT}[*] Chamber state:{RESET} Nullified (no ghost references).")
             return 0
 
@@ -493,21 +510,21 @@ def main() -> int:
         if args.action_view:
             loaded_note = engine.get_loaded_note()
             if not loaded_note:
-                sys.stderr.write(f"{ACCENT}[✗] Error:{RESET} No note loaded in chamber. Use --select-note first.\n")
+                print_fail("NO NOTE LOADED IN CHAMBER. USE --SELECT-NOTE FIRST.")
                 return 1
 
-            print(DIVIDER_57)
+            print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
             print(f" {ACCENT}NOTE TELEMETRY & CONTENT{RESET}")
-            print(SUBDIVIDER_57)
-            print(f" {ACCENT}ID:{RESET}       {loaded_note['note_id']}")
-            print(f" {ACCENT}TITLE:{RESET}    {loaded_note['title']}")
-            print(f" {ACCENT}CATEGORY:{RESET} {loaded_note['cat_name']}")
-            print(f" {ACCENT}TAGS:{RESET}     {' '.join(['#' + t for t in loaded_note['tags']]) or '(none)'}")
-            print(f" {ACCENT}WORDS:{RESET}    {len(loaded_note['content'].split())}")
-            print(f" {ACCENT}UPDATED:{RESET}  {loaded_note['updated_at']}")
-            print(SUBDIVIDER_57)
+            print(f"{NEUTRAL}{SUBDIVIDER_57}{RESET}")
+            print(f" {ACCENT}ID:{RESET}       {NEUTRAL}{loaded_note['note_id']}{RESET}")
+            print(f" {ACCENT}TITLE:{RESET}    {NEUTRAL}{loaded_note['title']}{RESET}")
+            print(f" {ACCENT}CATEGORY:{RESET} {NEUTRAL}{loaded_note['cat_name']}{RESET}")
+            print(f" {ACCENT}TAGS:{RESET}     {NEUTRAL}{' '.join(['#' + t for t in loaded_note['tags']]) or '(none)'}{RESET}")
+            print(f" {ACCENT}WORDS:{RESET}    {NEUTRAL}{len(loaded_note['content'].split())}{RESET}")
+            print(f" {ACCENT}UPDATED:{RESET}  {NEUTRAL}{loaded_note['updated_at']}{RESET}")
+            print(f"{NEUTRAL}{SUBDIVIDER_57}{RESET}")
             print(loaded_note["content"])
-            print(DIVIDER_57)
+            print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
             return 0
 
         if args.export:
@@ -525,21 +542,21 @@ def main() -> int:
             if args.json:
                 print(json.dumps(build_report, indent=2))
             else:
-                print(DIVIDER_57)
+                print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
                 print(f" {ACCENT}STATIC DOCUMENTATION SITE COMPILED{RESET}")
-                print(SUBDIVIDER_57)
-                print(f" {ACCENT}DESTINATION:{RESET}  {build_report['output_directory']}")
-                print(f" {ACCENT}CATEGORIES:{RESET}   {build_report['categories_built']}")
-                print(f" {ACCENT}NOTES BUILT:{RESET}  {build_report['notes_built']}")
-                print(f" {ACCENT}PORTAL HUB:{RESET}   {build_report['portal_index']}")
-                print(f" {ACCENT}SITE MAP:{RESET}     {build_report['sitemap_html']}")
-                print(DIVIDER_57)
+                print(f"{NEUTRAL}{SUBDIVIDER_57}{RESET}")
+                print(f" {ACCENT}DESTINATION:{RESET}  {NEUTRAL}{build_report['output_directory']}{RESET}")
+                print(f" {ACCENT}CATEGORIES:{RESET}   {NEUTRAL}{build_report['categories_built']}{RESET}")
+                print(f" {ACCENT}NOTES BUILT:{RESET}  {NEUTRAL}{build_report['notes_built']}{RESET}")
+                print(f" {ACCENT}PORTAL HUB:{RESET}   {NEUTRAL}{build_report['portal_index']}{RESET}")
+                print(f" {ACCENT}SITE MAP:{RESET}     {NEUTRAL}{build_report['sitemap_html']}{RESET}")
+                print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
             return 0
 
         if args.action_pull:
             loaded_note = engine.get_loaded_note()
             if not loaded_note:
-                sys.stderr.write(f"{ACCENT}[✗] Error:{RESET} No note loaded in chamber. Use --select-note first.\n")
+                print_fail("NO NOTE LOADED IN CHAMBER. USE --SELECT-NOTE FIRST.")
                 return 1
 
             dest_target = args.dest or str(LOCAL_EXPORTS_DIRECTORY / f"{loaded_note['slug']}.md")
@@ -559,7 +576,7 @@ def main() -> int:
                 export_res["clipboard_copied"] = clipboard_copied
                 print(json.dumps(export_res, indent=2))
             else:
-                print(f"{ACCENT}[✓] Note pulled to:{RESET} {export_res['destination_path']}")
+                print_positive(f"note pulled to: {export_res['destination_path']}")
                 if clipboard_copied:
                     print(f"    {ACCENT}[*]{RESET} Content copied to Termux clipboard.")
             return 0
@@ -567,7 +584,7 @@ def main() -> int:
         if args.action_edit:
             loaded_note = engine.get_loaded_note()
             if not loaded_note:
-                sys.stderr.write(f"{ACCENT}[✗] Error:{RESET} No note loaded in chamber. Use --select-note first.\n")
+                print_fail("NO NOTE LOADED IN CHAMBER. USE --SELECT-NOTE FIRST.")
                 return 1
 
             editor_exe = os.getenv("EDITOR", "nano")
@@ -584,7 +601,7 @@ def main() -> int:
                     new_content = f.read()
                 temp_edit_file.unlink(missing_ok=True)
                 engine.update_note(loaded_note["note_id"], new_content=new_content)
-                print(f"{ACCENT}[✓] Note updated from editor.{RESET}")
+                print_positive("note updated from editor.")
             return 0
 
         if args.import_file:
@@ -597,7 +614,7 @@ def main() -> int:
             if args.json:
                 print(json.dumps(imp_res, indent=2))
             else:
-                print(f"{ACCENT}[✓] Markdown file imported into MFDB!{RESET}")
+                print_positive("markdown file imported into mfdb!")
                 print(f"    ID:       {imp_res['note_id']}")
                 print(f"    Title:    {imp_res['title']}")
                 print(f"    Category: {imp_res['cat_name']}")
@@ -611,9 +628,9 @@ def main() -> int:
             if args.json:
                 print(json.dumps(query_results, indent=2))
             else:
-                print(DIVIDER_57)
+                print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
                 print(f" {ACCENT}QUERY RESULTS:{RESET} '{args.query}' {f'({len(query_results)} found)':>30}")
-                print(SUBDIVIDER_57)
+                print(f"{NEUTRAL}{SUBDIVIDER_57}{RESET}")
                 if not query_results:
                     print(f" {DIM}No matching notes found.{RESET}")
                 else:
@@ -625,8 +642,8 @@ def main() -> int:
                         preview = res["content"].strip().replace("\n", " ")[:48]
                         if preview:
                             print(f"   {DIM}{preview}...{RESET}")
-                        print(SUBDIVIDER_57)
-                print(DIVIDER_57)
+                        print(f"{NEUTRAL}{SUBDIVIDER_57}{RESET}")
+                print(f"{NEUTRAL}{DIVIDER_57}{RESET}")
             return 0
 
         # 10. Configuration Management
@@ -663,7 +680,7 @@ def main() -> int:
                     "value": parsed_val
                 }, indent=2))
             else:
-                print(f"{ACCENT}[✓] Configuration updated:{RESET} {setting_key} = {parsed_val}")
+                print_positive(f"configuration updated: {setting_key} = {parsed_val}")
             return 0
 
         # If none of the specific flags matched, show status and help
@@ -673,7 +690,7 @@ def main() -> int:
         return 0
 
     except Exception as error_instance:
-        sys.stderr.write(f"{ACCENT}[✗] Error:{RESET} {error_instance}\n")
+        print_fail(f"{error_instance}")
         return 1
 
 
