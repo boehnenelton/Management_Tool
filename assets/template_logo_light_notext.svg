@@ -1,0 +1,27 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pure White Substrate -->
+  <rect width="1280" height="640" fill="#FFFFFF" />
+
+  <!-- Outer Structural Boundary Inset -->
+  <rect x="48" y="48" width="1184" height="544" rx="0" fill="none" stroke="#E5E7EB" stroke-width="1.5" />
+
+  <!-- Corner Precision Ticks (Zero Curvature) -->
+  <path d="M 48 76 L 48 48 L 76 48" fill="none" stroke="#9CA3AF" stroke-width="2" />
+  <path d="M 1204 48 L 1232 48 L 1232 76" fill="none" stroke="#9CA3AF" stroke-width="2" />
+  <path d="M 48 564 L 48 592 L 76 592" fill="none" stroke="#9CA3AF" stroke-width="2" />
+  <path d="M 1204 592 L 1232 592 L 1232 564" fill="none" stroke="#9CA3AF" stroke-width="2" />
+
+  <!-- Vertical Red Accent Marker -->
+  <rect x="48" y="270" width="4" height="100" rx="0" fill="#DE2626" />
+
+  <!-- Subtle Professional 3D Isometric Branding Cube (Centered Stage, Zero Text) -->
+  <g transform="translate(640, 320)">
+    <!-- Top Face (Black border, white inner recess) -->
+    <polygon points="0,-48 56,-18 0,12 -56,-18" fill="#000000" stroke="#000000" stroke-width="1.5" stroke-linejoin="round" />
+    <polygon points="0,-36 40,-15 0,6 -40,-15" fill="#FFFFFF" />
+    <!-- Left Face (Clean Light Gray) -->
+    <polygon points="-56,-18 0,12 0,72 -56,42" fill="#E5E7EB" stroke="#000000" stroke-width="1.5" stroke-linejoin="round" />
+    <!-- Right Face (Elton Boehnen Signature Red #DE2626) -->
+    <polygon points="0,12 56,-18 56,42 0,72" fill="#DE2626" stroke="#000000" stroke-width="1.5" stroke-linejoin="round" />
+  </g>
+</svg>
