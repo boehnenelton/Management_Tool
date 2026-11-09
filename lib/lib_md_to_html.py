@@ -25,7 +25,7 @@ import subprocess
 import sys
 import tempfile
 
-VERSION: str = "3.1.0"
+VERSION: str = "1.6.0"
 VERSION_INT: int = 310
 PACKAGE_VERSION: int = 100
 

@@ -1,0 +1,92 @@
+{
+  "Format": "BEJSON",
+  "Format_Version": "104a",
+  "Format_Creator": "Elton Boehnen",
+  "Schema_Name": "Job Schema",
+  "Schema_Version": "1.0",
+  "Records_Type": [
+    "JobTask"
+  ],
+  "Job_Goal": "Optimize BEJSON memory caching and disk I/O",
+  "Job_Type": "coding",
+  "Job_Subtype": "optimization",
+  "Contextualize_Plan": true,
+  "Contextualize_Last": true,
+  "Job_Complete": false,
+  "Creation_Date": "2026-11-05",
+  "Completion_Date": "",
+  "Fields": [
+    {
+      "name": "task_id",
+      "type": "string"
+    },
+    {
+      "name": "task_order",
+      "type": "integer"
+    },
+    {
+      "name": "task_name",
+      "type": "string"
+    },
+    {
+      "name": "task_description",
+      "type": "string"
+    },
+    {
+      "name": "task_completed",
+      "type": "boolean"
+    },
+    {
+      "name": "audit_enabled",
+      "type": "boolean"
+    },
+    {
+      "name": "audit_passed",
+      "type": "boolean"
+    },
+    {
+      "name": "audit_fail_reason",
+      "type": "string"
+    },
+    {
+      "name": "task_context",
+      "type": "array"
+    },
+    {
+      "name": "task_reference",
+      "type": "array"
+    },
+    {
+      "name": "task_mandatory",
+      "type": "boolean"
+    }
+  ],
+  "Values": [
+    [
+      "9408cdee-2162-4c68-a07f-33307a03594e",
+      1,
+      "Profile Field Map Cache Access",
+      "Measure lookup timing in O(1) cache dictionary",
+      true,
+      true,
+      false,
+      "",
+      [],
+      [],
+      true
+    ],
+    [
+      "51431b73-d5a2-4d89-9dc1-be2b975ea020",
+      2,
+      "Refactor Disk Flush Buffers",
+      "Batch I/O operations into 64KB chunks",
+      false,
+      true,
+      false,
+      "",
+      [],
+      [],
+      true
+    ]
+  ]
+}

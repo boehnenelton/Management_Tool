@@ -6,7 +6,7 @@ Purpose   : Standards STATE: Stateful context manager for BEJSON 105 Standards L
             (subsystem, category, actor, session, default flags, key prefix) from event emission.
 VERSION   : 3.2.0
 Author    : Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
-RELATIONAL_ID : 7c89d231-1e42-4f09-9b55-d4a8ef71c991
+RELATIONAL_ID : bb348f5c-4862-4e96-b2ea-f57092c2c14d
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-VERSION: str = "3.2.0"
+VERSION: str = "1.6.0"
 _STATE_LOCK: threading.RLock = threading.RLock()
 
 # Default state file location: env pointer or user home directory

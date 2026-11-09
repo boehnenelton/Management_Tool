@@ -4,7 +4,7 @@ Rel. Path : Lib_PY/Standards/lib_bejson_Standards_export.py
 Purpose   : Standards EXPORT: the shared row filter plus json / ndjson / markdown / html exporters and file, stream or text destinations.
 VERSION   : 1.0.0
 Author    : Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
-RELATIONAL_ID : 7de0ef3b-4bff-4754-a448-dc53ad59780a
+RELATIONAL_ID : bb348f5c-4862-4e96-b2ea-f57092c2c14d
 
 json (a JSON array) and ndjson stream row by row; markdown and html hold the (filtered) rows in memory
 because they print a count and may sort. Every value is escaped for the target format; the html file is
@@ -34,7 +34,7 @@ import lib_bejson_Standards_errors as err  # noqa: E402
 import lib_bejson_Standards_validator as val  # noqa: E402
 
 logger = logging.getLogger(__name__)
-VERSION = "1.0.0"
+VERSION = "1.6.0"
 
 AUTHOR_CREDIT = "Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton"
 _HOT_LEVELS = ("ERROR", "FATAL")

@@ -1,10 +1,10 @@
 #!/data/data/com.termux/files/usr/bin/env python3
 """
-Name:           management_tool.py
-Description:    Unified System Management Tool & Entry Router for Stateful Logging & Report Indexing
-Version:        1.2.0
-Author:         Elton Boehnen
-License:        MIT / BEJSON Standard
+# Name:           management_tool.py
+# Description:    Unified System Management Tool & Entry Router for Logging, Reports, Notes, Taxonomy & Jobs
+# Version:        1.5.0
+# Author:         Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
+# License:        MIT / BEJSON Standard
 """
 
 from __future__ import annotations
@@ -20,8 +20,9 @@ LIB_DIR: Path = SCRIPT_DIR / "lib"
 CONFIG_DIR: Path = SCRIPT_DIR / "config"
 LOGGING_TOOL_PATH: Path = SCRIPT_DIR / "logging_tool.py"
 REPORT_INDEXER_PATH: Path = SCRIPT_DIR / "report_indexer.py"
-AUTHORITATIVE_NOTES_TOOL: Path = Path("/storage/emulated/0/Admin/System/tools/notes_tool/notes_tool.py")
-NOTES_TOOL_PATH: Path = AUTHORITATIVE_NOTES_TOOL if AUTHORITATIVE_NOTES_TOOL.exists() else SCRIPT_DIR / "notes_tool.py"
+NOTES_TOOL_PATH: Path = SCRIPT_DIR / "notes_tool.py"
+JOB_TOOL_PATH: Path = SCRIPT_DIR / "job_tool.py"
+TAXONOMY_CARTOGRAPHER_PATH: Path = Path("/storage/emulated/0/Admin/Dev/Tools/Taxonomy_Cartographer/taxonomy_cartographer.py")
 STATE_FILE_PATH: Path = CONFIG_DIR / "state.json"
 
 if str(LIB_DIR) not in sys.path:
@@ -44,7 +45,13 @@ SUPPORTED_MODES: Dict[str, str] = {
     "2": "reports",
     "reports": "reports",
     "3": "notes",
-    "notes": "notes"
+    "notes": "notes",
+    "4": "jobs",
+    "job": "jobs",
+    "jobs": "jobs",
+    "5": "taxonomy",
+    "taxonomy": "taxonomy",
+    "cartography": "taxonomy"
 }
 
 
@@ -71,17 +78,21 @@ def persist_shared_state(state_dictionary: Dict[str, Any]) -> None:
 
 def forward_command(target_script: Path, forward_arguments: List[str]) -> int:
     """Forward command-line invocation to dedicated subsystem script."""
+    if not target_script.is_file():
+        print(f"{ACCENT}[✗] Subsystem script not found:{RESET} {target_script}", file=sys.stderr)
+        return 1
     command_vector: List[str] = [sys.executable, str(target_script)] + forward_arguments
     execution_result = subprocess.run(command_vector)
     return execution_result.returncode
 
 
 def print_unified_status() -> None:
-    """Print high-density status banner across both logging and report subsystems."""
+    """Print high-density status banner across all management subsystems."""
     state_data: Dict[str, Any] = load_shared_state()
     current_mode: str = state_data.get("active_mode", "reports").upper()
     current_cat: str = state_data.get("active_category") or "(none)"
     current_ent: str = state_data.get("active_entry") or "(none)"
+    current_job: str = state_data.get("active_job") or "(none)"
 
     print("=" * 57)
     print(f" {ACCENT}SYSTEM MANAGEMENT TOOL [UNIFIED ROUTER]{RESET}")
@@ -89,11 +100,13 @@ def print_unified_status() -> None:
     print(f" {ACCENT}ACTIVE MODE:{RESET}  [{current_mode}]")
     print(f" {ACCENT}CATEGORY:{RESET}     {current_cat:<38}")
     print(f" {ACCENT}ENTRY:{RESET}        {current_ent:<38}")
+    print(f" {ACCENT}JOB:{RESET}          {current_job:<38}")
     print("-" * 57)
     print(" Subsystems:")
-    print("  • [1] Logging:  BEJSON 105 Standardized Logging Tool")
-    print("  • [2] Reports:  Research Papers Tracking & Indexer")
-    print("  • [3] Notes:    Categorized Notes & MFDB Notebook Manager")
+    print("  • [1] Logging:   BEJSON 105 Standardized Logging Tool")
+    print("  • [2] Reports:   Research Papers Tracking & Indexer")
+    print("  • [3] Notes:     Categorized Notes & MFDB Notebook Manager")
+    print("  • [4] Jobs:      Stateful Job Chamber & Urgent Deployment Manager")
     print("=" * 57)
 
 
@@ -105,19 +118,25 @@ def print_help_guide() -> None:
     print("Usage: management_tool.py [mode_option | router_command | flags]")
     print()
     print(f"{ACCENT}Mode Configuration:{RESET}")
-    print("  --select-mode <1|2|3|logging|reports|notes>  Switch active mode")
-    print("  --list-modes                                 Display supported modes")
-    print("  --status                                     Print unified chamber status")
+    print("  --select-mode <1|2|3|4|logging|reports|notes|jobs>             Switch active mode")
+    print("  --list-modes                                                   Display supported modes")
+    print("  --status                                                       Print unified chamber status")
     print()
     print(f"{ACCENT}Direct Subsystem Routing:{RESET}")
-    print("  management_tool.py log [args...]     Directly route to logging tool")
-    print("  management_tool.py report [args...]  Directly route to report indexer")
-    print("  management_tool.py note [args...]    Directly route to notes tool")
+    print("  management_tool.py log [args...]      Directly route to logging tool")
+    print("  management_tool.py report [args...]   Directly route to report indexer")
+    print("  management_tool.py note [args...]     Directly route to notes tool")
+    print("  management_tool.py job [args...]      Directly route to job manager")
+    print("  management_tool.py tax [args...]      Route to Taxonomy Cartographer (Admin/Dev/Tools)")
+    print()
+    print(f"{ACCENT}Mode 4 (Job Management) Direct Flags:{RESET}")
+    print("  --list-saved, --list-deployed, --select-job <id>, --new <name>")
+    print("  --add-task \"<title>\", --toggle-task <idx>, --deploy, --view")
     print()
     print(f"{ACCENT}Mode 3 (Notes Management) Direct Flags:{RESET}")
     print("  --list-notes, --select-note, --note-new, --note-edit, --note-delete")
     print("  --category-create, --category-edit, --category-delete, --set-category")
-    print("  --add-tag, --remove-tag, --export, --import <file.md>")
+    print("  --add-tag, --remove-tag, --export, --import <file.md>, --web")
     print()
     print(f"{ACCENT}Mode 2 (Reports Tracking) Direct Flags:{RESET}")
     print("  --list-categories, --list-entries, --select-category, --select-entry")
@@ -141,7 +160,7 @@ def main() -> int:
 
     first_argument: str = arguments[0].strip().lower()
 
-    # 1. Direct subsystem routing: 'log', 'report', or 'note'
+    # 1. Direct subsystem routing: 'log', 'report', 'note', 'taxonomy', or 'job'
     if first_argument in ("log", "logging"):
         return forward_command(LOGGING_TOOL_PATH, arguments[1:])
 
@@ -151,14 +170,20 @@ def main() -> int:
     if first_argument in ("note", "notes"):
         return forward_command(NOTES_TOOL_PATH, arguments[1:])
 
+    if first_argument in ("tax", "taxonomy", "cartographer", "cartography"):
+        return forward_command(TAXONOMY_CARTOGRAPHER_PATH, arguments[1:])
+
+    if first_argument in ("job", "jobs", "jobmaker"):
+        return forward_command(JOB_TOOL_PATH, arguments[1:])
+
     # 2. Mode management
     if first_argument in ("--select-mode", "-m"):
         if len(arguments) < 2:
-            print(f"{ACCENT}[✗] Error:{RESET} Mode value required (1/logging, 2/reports, or 3/notes).", file=sys.stderr)
+            print(f"{ACCENT}[✗] Error:{RESET} Mode value required (1/logging, 2/reports, 3/notes, 4/taxonomy, or 5/jobs).", file=sys.stderr)
             return 1
         mode_token = arguments[1].strip().lower()
         if mode_token not in SUPPORTED_MODES:
-            print(f"{ACCENT}[✗] Error:{RESET} Invalid mode '{mode_token}'. Allowed: 1, 2, or 3.", file=sys.stderr)
+            print(f"{ACCENT}[✗] Error:{RESET} Invalid mode '{mode_token}'. Allowed: 1, 2, 3, 4, or 5.", file=sys.stderr)
             return 1
         chosen_mode = SUPPORTED_MODES[mode_token]
         state = load_shared_state()
@@ -174,9 +199,11 @@ def main() -> int:
         print("=" * 57)
         print(f" {ACCENT}SUPPORTED OPERATIONAL MODES{RESET}")
         print("-" * 57)
-        print(f" [{ACCENT}1{RESET}] logging  - BEJSON 105 Standardized Logging Tool")
-        print(f" [{ACCENT}2{RESET}] reports  - Research Papers Tracking & Indexing")
-        print(f" [{ACCENT}3{RESET}] notes    - Categorized Notes & MFDB Notebook Manager")
+        print(f" [{ACCENT}1{RESET}] logging   - BEJSON 105 Standardized Logging Tool")
+        print(f" [{ACCENT}2{RESET}] reports   - Research Papers Tracking & Indexing")
+        print(f" [{ACCENT}3{RESET}] notes     - Categorized Notes & MFDB Notebook Manager")
+        print(f" [{ACCENT}4{RESET}] jobs      - Stateful Job Chamber & Urgent Deployment Manager")
+        print(f" [{ACCENT}* {RESET}] taxonomy  - External: Admin/Dev/Tools/Taxonomy_Cartographer")
         print("=" * 57)
         return 0
 
@@ -186,10 +213,18 @@ def main() -> int:
 
     # 3. Transparent Delegation based on Active Mode or Explicit Flags
     state = load_shared_state()
-    active_mode = state.get("active_mode", "notes")
+    active_mode = state.get("active_mode", "reports")
+
+    # If job-specific flags passed -> route to job_tool
+    if any(arg in ("--deploy", "--list-deployed", "--list-saved", "--list-completed") or arg.startswith("--select-job") or arg.startswith("--add-task") or arg.startswith("--toggle-task") or arg in ("--new", "--create-job", "--show-chamber", "--clear-job") for arg in arguments):
+        return forward_command(JOB_TOOL_PATH, arguments)
+
+    # If taxonomy-specific flags passed -> route to taxonomy_cartographer
+    if any(arg in ("--map", "--signatures", "--ast", "--scan", "--export-schema") or arg.startswith("--scan") for arg in arguments):
+        return forward_command(TAXONOMY_CARTOGRAPHER_PATH, arguments)
 
     # If note-specific flags passed -> route to notes_tool
-    if any(arg.startswith("--note") or arg.startswith("--add-tag") or arg.startswith("--remove-tag") or arg.startswith("--set-category") or arg in ("--list-notes", "--clear-note") for arg in arguments):
+    if any(arg.startswith("--note") or arg.startswith("--add-tag") or arg.startswith("--remove-tag") or arg.startswith("--set-category") or arg in ("--list-notes", "--clear-note", "--web", "--serve") for arg in arguments):
         return forward_command(NOTES_TOOL_PATH, arguments)
 
     # If write, read, export, report-log, audit, archive passed -> route to logging_tool
@@ -202,6 +237,8 @@ def main() -> int:
     if any(arg.startswith("--import") or arg.startswith("--query") or "category" in arg or "entry" in arg or "pull" in arg for arg in arguments):
         if active_mode == "notes":
             return forward_command(NOTES_TOOL_PATH, arguments)
+        if active_mode in ("job", "jobs"):
+            return forward_command(JOB_TOOL_PATH, arguments)
         return forward_command(REPORT_INDEXER_PATH, arguments)
 
     # Otherwise route to active mode tool
@@ -209,6 +246,10 @@ def main() -> int:
         target_tool = LOGGING_TOOL_PATH
     elif active_mode == "notes":
         target_tool = NOTES_TOOL_PATH
+    elif active_mode == "taxonomy":
+        target_tool = TAXONOMY_CARTOGRAPHER_PATH
+    elif active_mode in ("job", "jobs"):
+        target_tool = JOB_TOOL_PATH
     else:
         target_tool = REPORT_INDEXER_PATH
     return forward_command(target_tool, arguments)

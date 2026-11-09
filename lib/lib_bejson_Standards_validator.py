@@ -4,7 +4,7 @@ Rel. Path : Lib_PY/Standards/lib_bejson_Standards_validator.py
 Purpose   : Standards VALIDATOR: pure integrity gates for log entries, rows, config and whole log files (schema v3, 17 columns). Never writes; the audit never raises.
 VERSION   : 3.0.0
 Author    : Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
-RELATIONAL_ID : 7879bfe6-7c9c-40ba-8b73-7cd9322b2e6a
+RELATIONAL_ID : bb348f5c-4862-4e96-b2ea-f57092c2c14d
 
 Required tier: timestamp, level, subsystem, event key, message, process id. Every other column is
 optional: stored as null when omitted, format-checked when present.
@@ -30,7 +30,7 @@ for _fam in ('Core', 'Standards', 'Taxonomies', 'Tax_Scaffolds'):
 import lib_bejson_Standards_errors as err  # noqa: E402
 
 logger = logging.getLogger(__name__)
-VERSION = "3.0.0"
+VERSION = "1.6.0"
 
 # ---------------------------------------------------------------------------
 # Canonical contract

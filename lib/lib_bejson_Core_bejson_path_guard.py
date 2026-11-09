@@ -14,7 +14,7 @@ Changelog:
   1.3.1 - 2026-10-30: _bejson_mfdb_escapes_root treats absolute paths (POSIX root, drive letter) as escaping the MFDB root. Previously an absolute file_path to an existing file outside the root validated as VALID.
 Author:          Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
 Format_Creator:  Elton Boehnen
-RELATIONAL_ID:   c97bcbc4-125c-4cb1-a82d-8b82b1c95060
+RELATIONAL_ID:   bb348f5c-4862-4e96-b2ea-f57092c2c14d
 """
 
 import os
@@ -120,4 +120,4 @@ def safe_extract_zip(zf, dest_dir: str) -> None:
     zf.extractall(dest_dir)
 
 
-VERSION = "1.3.1"
+VERSION = "1.6.0"

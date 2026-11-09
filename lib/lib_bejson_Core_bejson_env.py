@@ -7,7 +7,7 @@ Date:           2026-10-09
 Author:         Elton Boehnen
 Contact:        eltonboehnen@gmail.com | boehnenelton2024.pages.dev | github.com/boehnenelton
 Format_Creator: Elton Boehnen
-RELATIONAL_ID:  2ca57c10-8b9e-4147-95fd-07e8158a95d6
+RELATIONAL_ID:  bb348f5c-4862-4e96-b2ea-f57092c2c14d
 Release_Version: 300
 
 Changelog:
@@ -30,7 +30,7 @@ import threading
 from pathlib import Path
 
 logger = logging.getLogger("lib_bejson_Core_bejson_env")
-VERSION = "2.3.1"
+VERSION = "1.6.0"
 
 _ENV_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 

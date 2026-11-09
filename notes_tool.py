@@ -11,7 +11,7 @@ Purpose     : High-density, zero-SQL Categorized Notes & Notebook Management Eng
 Version     : 1.1.0
 Author      : Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
 Date        : 2026-11-03
-RELATIONAL_ID : 79c10cd0-0040-46be-90d0-633c84d112d7
+RELATIONAL_ID : bb348f5c-4862-4e96-b2ea-f57092c2c14d
 """
 
 from __future__ import annotations
@@ -229,6 +229,8 @@ Usage Workflows:
     action_group.add_argument("--import", "--import-file", type=str, metavar="<file.md>", dest="import_file", help="Import markdown note into MFDB")
     action_group.add_argument("--export-site", "--build-site", action="store_true", help="Compile complete static HTML website for all notes into taxonomy hierarchy")
     action_group.add_argument("--site-dir", type=str, metavar="<path>", help="Destination directory for static site export (default: exports/notes_site)")
+    action_group.add_argument("--web", "--serve", action="store_true", help="Launch interactive Flask web editor workspace on localhost (Policy §8.1-§8.7)")
+    action_group.add_argument("--port", type=int, default=5050, help="Port for web server (default: 5050)")
 
     # Configuration Management
     config_group = parser.add_argument_group("Configuration Management")
@@ -510,6 +512,11 @@ def main() -> int:
 
         if args.export:
             return handle_export(engine, args.dest, args.json)
+
+        if args.web:
+            import notes_web_server
+            sys.argv = [sys.argv[0], "--port", str(args.port)]
+            return notes_web_server.main()
 
         if args.export_site:
             custom_dir = Path(args.site_dir).resolve() if args.site_dir else None

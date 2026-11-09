@@ -8,7 +8,7 @@ Description:    Dedicated Multi-File Database (MFDB v1.31) engine and Loaded Cha
 Version:        1.0.0
 Author:         Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
 Date:           2026-11-03
-RELATIONAL_ID:  48a2f1b0-18e3-4c57-8df2-9b0d1e3c8872
+RELATIONAL_ID:  bb348f5c-4862-4e96-b2ea-f57092c2c14d
 """
 
 from __future__ import annotations

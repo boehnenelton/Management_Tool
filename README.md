@@ -5,15 +5,15 @@
 # Management Tool Suite [Unified Router & Subsystem Hub]
 
 > **Author**: Elton Boehnen · boehnenelton2024@gmail.com · [boehnenelton2024.pages.dev](https://boehnenelton2024.pages.dev) · [GitHub](https://github.com/boehnenelton)  
-> **Format**: BEJSON 104a / 105 Standards & MFDB v1.31 Zero-SQL Data Engine  
-> **Interface**: 57-Column Portrait Terminal Discipline · Policy §8.1 Truecolor (#DE2626)  
+> **Format**: BEJSON 104a / 105 Standards & MFDB v1.31 Multi-File Database  
+> **Interface**: 57-Column Portrait Terminal Discipline · Truecolor (#DE2626)  
 > **Platform**: Linux / Android Termux (ARM64) Portable Runtime  
 
 ---
 
 ## 1. Architectural Overview
 
-The **Management Tool Suite** provides an authoritative, zero-SQL unified operational interface for system administration, structured logging, technical report indexing, and categorized knowledge base management across three dedicated operational modes:
+The **Management Tool Suite** provides a unified operational interface for system administration, structured logging, technical report indexing, categorized notes management, and stateful job execution across 4 dedicated operational modes:
 
 ```
                       ┌────────────────────────────────────────┐
@@ -21,22 +21,23 @@ The **Management Tool Suite** provides an authoritative, zero-SQL unified operat
                       │         [UNIFIED MASTER ROUTER]        │
                       └───────────────────┬────────────────────┘
                                           │
-         ┌────────────────────────────────┼────────────────────────────────┐
-         │                                │                                │
-         ▼                                ▼                                ▼
-  ┌───────────────┐              ┌──────────────────┐             ┌─────────────────┐
-  │    Mode 1     │              │      Mode 2      │             │     Mode 3      │
-  │ Logging Tool  │              │  Report Indexer  │             │   Notes Tool    │
-  │ (logging_tool)│              │ (report_indexer) │             │  (notes_tool)   │
-  └───────┬───────┘              └────────┬─────────┘             └────────┬────────┘
-          │                               │                                │
-          ▼                               ▼                                ▼
-  • BEJSON 105 Log Sink           • Research Papers Index         • Dedicated MFDB v1.31
-  • Loaded Chamber Context        • Category Management           • Loaded Chamber State
-  • Single-Page HTML Reports      • Search & Query                • Tag Management
-    via md2html                   • Markdown Pull / View          • Strict Markdown Export
-  • Global Audit & Rotation                                       • Static Taxonomy Site
+       ┌──────────────┬───────────────────┼───────────────────┐
+       │              │                   │                   │
+       ▼              ▼                   ▼                   ▼
+┌─────────────┐┌──────────────┐   ┌───────────────┐   ┌──────────────┐
+│   Mode 1    ││    Mode 2    │   │    Mode 3     │   │    Mode 4    │
+│Logging Tool ││Report Indexer│   │  Notes Tool   │   │   Job Tool   │
+│(logging_tool││(report_index)│   │ (notes_tool)  │   │  (job_tool)  │
+└──────┬──────┘└──────┬───────┘   └───────┬───────┘   └──────┬───────┘
+       │              │                   │                  │
+       ▼              ▼                   ▼                  ▼
+• BEJSON 105   • Papers Index     • MFDB v1.31        • Saved Jobs
+• Daily UTC    • Categorization   • Loaded Chamber    • Task Stepping
+• HTML Reports • Query & Search   • Strict Markdown   • Urgent Deploy
+• Log Rotation • Paper Pulling    • Web Editor (Flask)• Status Sync
 ```
+
+> **External Tool Routing**: Taxonomy Cartography is maintained independently as a standalone tool in `Admin/Dev/Tools/Taxonomy_Cartographer` and can be executed directly or invoked via `./management.sh tax`.
 
 ---
 
@@ -70,7 +71,13 @@ The **Management Tool Suite** provides an authoritative, zero-SQL unified operat
   - Master Portal Hub: `index.html`
   - Accessible Sitemaps: `sitemap.html`, `sitemap.xml`, and `robots.txt`
   - Zero External Dependencies: Embedded responsive dark theme (`#05070B`, `#0B0F17`, `#DE2626`), Open Graph, Schema.org JSON-LD, and ARIA landmark accessibility.
+- **Interactive Web Editor Workspace (`notes_web_server.py`)**: Localhost Flask workspace running on port 5050 with dual-pane real-time markdown editor, live HTML preview, and chamber state synchronization per Policy §8.1-§8.7 (launch via `./notes.sh --web` or `./management.sh note --web`).
 - **CLI Configuration Management**: Inspect and edit site parameters, author profiles, and build flags via `--config` and `--config-set <key> <val>`.
+
+### Mode 4: Stateful Job Chamber & Urgent Deployment Manager (`job_tool.py`)
+- **Persistence**: Saved job documents and blueprints in `data/saved_jobs/` (`.bejson` and `.md`).
+- **Loaded Chamber Pattern**: Select and lock an active job (`--select-job <id>`), inspect task breakdown (`--view`), step-toggle tasks (`--toggle-task <idx>`), append tasks (`--add-task "<name>"`), and deploy directly into `/storage/emulated/0/Admin/System/Job_Management/Jobs` (`--deploy`).
+- **Urgent Queue Telemetry**: Live inspection of urgent intake (`--list-deployed`), saved templates (`--list-saved`), and completed archives (`--list-completed`).
 
 ---
 
@@ -82,15 +89,18 @@ The **Management Tool Suite** provides an authoritative, zero-SQL unified operat
 # Display unified chamber status across all subsystems
 ./management.sh --status
 
-# Select active operational mode (1, 2, or 3)
+# Select active operational mode (1, 2, 3, or 4)
 ./management.sh --select-mode logging    # Mode 1
 ./management.sh --select-mode reports    # Mode 2
 ./management.sh --select-mode notes      # Mode 3
+./management.sh --select-mode jobs       # Mode 4
 
 # Direct Subsystem Execution
 ./management.sh log [arguments...]      # Route to logging_tool
 ./management.sh report [arguments...]   # Route to report_indexer
 ./management.sh note [arguments...]     # Route to notes_tool
+./management.sh job [arguments...]      # Route to job_tool
+./management.sh tax [arguments...]      # Route to Taxonomy_Cartographer (Admin Dev)
 ```
 
 ### Logging & Report Generation (Mode 1)
@@ -138,20 +148,50 @@ The **Management Tool Suite** provides an authoritative, zero-SQL unified operat
 
 ---
 
+### Stateful Job Management (Mode 4)
+
+```bash
+# List saved jobs, deployed urgent jobs, and completed jobs
+./management.sh job --list-saved
+./management.sh job --list-deployed
+./management.sh job --list-completed
+
+# Lock active job into chamber
+./management.sh job --select-job "Cache_Optimization_Suite"
+
+# Inspect and step tasks
+./management.sh job --view
+./management.sh job --toggle-task 1
+./management.sh job --add-task "Verify O(1) field map lookups"
+
+# Deploy staged job into live urgent jobs queue (/storage/emulated/0/Admin/System/Job_Management/Jobs)
+./management.sh job --deploy
+```
+
+---
+
 ## 4. Repository Structure
 
 ```
 management_tool/
 ├── management_tool.py        # Master Router Entry Point
 ├── management.sh             # Master Shell Launcher
+├── __main__.py               # Package Directory Invocation Entry Point
 ├── logging_tool.py           # Mode 1: Stateful Global Logging Tool
 ├── report_indexer.py         # Mode 2: Research Reports Indexer
 ├── notes_tool.py             # Mode 3: Categorized Notes MFDB Manager
 ├── notes.sh                  # Mode 3 Shell Launcher
+├── notes_web_server.py       # Mode 3: Zero-Cloud Flask Notes Web Editor (port 5050)
+├── job_tool.py               # Mode 4: Stateful Job Chamber & Urgent Deployment Manager
 ├── bejson_project.json       # Project Identity & Version Descriptor
 ├── .gitignore                # Excludes runtime data, logs, notes, and reports
 ├── config/
-│   └── config.json           # Default System Configuration Store
+│   ├── config.json           # Default System Configuration Store
+│   └── state.json            # Loaded Chamber Persistent Context State
+├── data/
+│   └── saved_jobs/           # Saved Job Documents & Workflow Templates
+├── dev/
+│   └── flask_notes_editor_plan.md # Subsystem Architecture & Interface Spec
 ├── lib/
 │   ├── lib_log_report_generator.py # Markdown & HTML Report Generator
 │   ├── lib_md_to_html.py           # Markdown-to-HTML Parsing Engine

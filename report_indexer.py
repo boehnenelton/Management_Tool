@@ -1,11 +1,9 @@
 #!/data/data/com.termux/files/usr/bin/env python3
 """
-Name:           context_cli.py
-Description:    Multi-Mode Stateful Context CLI (No TUI, Pure CLI)
-                Mode 1: Logging State & Log Sinks
-                Mode 2: Research Papers & Report Tracking, Categorization, Indexing & Pulling
-Version:        1.1.0
-Author:         Elton Boehnen
+Name:           report_indexer.py
+Description:    Management Tool Suite: Research Papers & Technical Report Indexer (Mode 2)
+Version:        1.4.0
+Author:         Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
 License:        MIT / BEJSON Standard
 """
 
@@ -60,36 +58,25 @@ def build_cli_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Usage Modes:
-  Mode 1 (logging): BEJSON 105 Standards Logging & Log Sink Management
-  Mode 2 (reports): Research Papers & Report Tracking, Category Folders & Indexing
+  Mode 1 (logging):  BEJSON 105 Standards Logging & Log Sink Management
+  Mode 2 (reports):  Research Papers & Report Tracking, Category Folders & Indexing
+  Mode 3 (notes):    Categorized Notes & MFDB Notebook Manager
+  Mode 4 (jobs):     Stateful Job Chamber & Urgent Deployment Manager
 
 Workflow Examples:
-  # Mode Selection
-  ./context_cli.py --select-mode 2              # Lock Mode 2 (reports)
-  ./context_cli.py --list-modes                 # Display supported modes
-
-  # Phase 1: Discovery
-  ./context_cli.py --list-categories           # List available categories
-  ./context_cli.py --list-entries              # List entries (filtered if category selected)
-
-  # Phase 2: Target Lock (Loaded Chamber)
-  ./context_cli.py --select-category BEJSON    # Lock category (clears entry)
-  ./context_cli.py --select-entry rep_003      # Lock entry into chamber
-  ./context_cli.py --status                    # Print active chamber status
-
-  # Phase 3: Action Execution (Against Loaded Chamber)
-  ./context_cli.py --action-view               # View report payload/content
-  ./context_cli.py --action-pull --dest ~/out  # Pull/copy report to destination
-  ./context_cli.py --action-edit               # Launch editor on report
-  ./context_cli.py --action-delete             # Destroy report and nullify chamber
-
-  # Import & Index Feature
-  ./context_cli.py --import my_paper.md --category AI --name deep_research.md
-  ./context_cli.py --query "architecture"      # Search index across documents
+  # Direct Management Router Invocations
+  management_tool.py report --list-categories
+  management_tool.py report --list-entries
+  management_tool.py report --select-category Audits
+  management_tool.py report --select-entry rep_009
+  management_tool.py report --status
+  management_tool.py report --action-view
+  management_tool.py report --import my_paper.md --category AI --name deep_research.md
+  management_tool.py report --query "architecture"
 """
     )
 
-    parser.add_argument("-v", "--version", action="version", version="Stateful Context CLI v1.1.0 (Pure CLI)")
+    parser.add_argument("-v", "--version", action="version", version="Management Tool Suite: Report Indexer v1.4.0")
     parser.add_argument("--json", action="store_true", help="Emit raw JSON structured output for automation")
 
     # Mode Selection

@@ -21,7 +21,7 @@ Description:     Standardized BEJSON project chunking engine. Ported 1:1 from
 Version:         1.9.1
 Library_Version: 228
 Date:            2026-10-06
-RELATIONAL_ID:   04a52c6b-3c30-46b9-9452-59370472d0d0
+RELATIONAL_ID:   bb348f5c-4862-4e96-b2ea-f57092c2c14d
 Release_Version: 300
 
 CHANGE (2026-10-06): Consolidation re-merge -- the V6-PKG101 silent-exception

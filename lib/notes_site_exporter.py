@@ -21,7 +21,7 @@ Description:    Exports categorized notes into an isomorphic, dark-themed, searc
 Version:        1.1.0
 Author:         Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
 Date:           2026-11-03
-RELATIONAL_ID:  8f4b239c-5e21-4d9f-ba10-0a2b3c4d5e6f
+RELATIONAL_ID:  bb348f5c-4862-4e96-b2ea-f57092c2c14d
 """
 
 from __future__ import annotations

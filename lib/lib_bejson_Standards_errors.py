@@ -4,7 +4,7 @@ Rel. Path : Lib_PY/Standards/lib_bejson_Standards_errors.py
 Purpose   : Standards ERRORS: numeric error codes 250-269 for the standardized logging sink. Source of truth for this family.
 VERSION   : 3.0.0
 Author    : Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
-RELATIONAL_ID : c23a2c11-3480-4fe7-87e0-c424926ba67f
+RELATIONAL_ID : bb348f5c-4862-4e96-b2ea-f57092c2c14d
 
 Range claim: 250-269. Checked against libraries_104 + libraries_105: Core 1-99 (MD 90-99), Core_Nesting
 130-159, Core_Extension 160-189, AI 200-235, Cognition 270-289, BEHTML 300-329, BEHTML_IDE 330-359,
@@ -13,7 +13,7 @@ draft used 180-199, which overlaps Core_Extension's 160-189; re-check this table
 """
 from __future__ import annotations
 
-VERSION = "3.0.0"
+VERSION = "1.6.0"
 
 # ---------------------------------------------------------------------------
 # Standards Logging (250-269)

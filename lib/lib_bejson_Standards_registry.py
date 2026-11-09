@@ -4,7 +4,7 @@ Rel. Path : Lib_PY/Standards/lib_bejson_Standards_registry.py
 Purpose   : Standards REGISTRY: public logging API (log / configure_sink / flush / read_logs / export_logs / archive_now / audit) with batched writes, secure-log routing, time-period archiving and a logging.Handler bridge. log() never raises.
 VERSION   : 3.1.0
 Author    : Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
-RELATIONAL_ID : 048bc177-91c3-4e5c-80dd-073fac59552c
+RELATIONAL_ID : bb348f5c-4862-4e96-b2ea-f57092c2c14d
 
 Flush triggers (no background thread): buffer >= batch_size, flush_interval_seconds elapsed at the
 next log() call, any ERROR/FATAL entry, flush(), read_logs() on that file, and interpreter exit.
@@ -45,7 +45,7 @@ import lib_bejson_Standards_validator as val  # noqa: E402
 import lib_bejson_Standards_state as st  # noqa: E402
 
 logger = logging.getLogger(__name__)
-VERSION = "3.2.0"
+VERSION = "1.6.0"
 
 # Re-export stateful context API (Loaded Chamber Pattern)
 bejson_standards_set_context = st.bejson_standards_set_context

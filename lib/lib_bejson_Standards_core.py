@@ -4,7 +4,7 @@ Rel. Path : Lib_PY/Standards/lib_bejson_Standards_core.py
 Purpose   : Standards CORE: storage engine for log files (BEJSON 104a, schema v3): row building, PID-locked read-modify-write, atomic commit, row-cap ring trim, time-period archiving, secure-file hardening, legacy migration, corrupt-file quarantine.
 VERSION   : 3.1.0
 Author    : Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
-RELATIONAL_ID : 0ce5a5e5-a3bb-42f2-afe9-fa1f91abfd3b
+RELATIONAL_ID : bb348f5c-4862-4e96-b2ea-f57092c2c14d
 
 One log file = one BEJSON 104a document. A batch of rows costs ONE locked read-modify-write;
 callers (the registry) batch so a log call is not a full-file rewrite. Persisted header keys:
@@ -41,7 +41,7 @@ import lib_bejson_Standards_errors as err  # noqa: E402
 import lib_bejson_Standards_validator as val  # noqa: E402
 
 logger = logging.getLogger(__name__)
-VERSION = "3.1.0"
+VERSION = "1.6.0"
 
 LOCK_TIMEOUT_SECONDS = 10
 _SECURE_IDX = [n for n, _t in val.LOG_FIELDS].index(val.F_EVENT_SECURE)   # derived from the schema, never typed in

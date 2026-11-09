@@ -7,7 +7,7 @@ Date:           2026-10-12
 Author:         Elton Boehnen
 Contact:        eltonboehnen@gmail.com | boehnenelton2024.pages.dev | github.com/boehnenelton
 Format_Creator: Elton Boehnen
-RELATIONAL_ID:  d528e5a4-de7d-4228-822e-99a93f48db5e
+RELATIONAL_ID:  bb348f5c-4862-4e96-b2ea-f57092c2c14d
 Release_Version: 300
 
 CHANGE (2026-10-06): Consolidation re-merge -- the V6-PKG101 silent-exception
@@ -1087,7 +1087,7 @@ def mfdb_core_create_database(
 # section -- the entire 104-series CRUD path -- is touched by any of it.
 # ---------------------------------------------------------------------------
 
-VERSION = "3.0.4"
+VERSION = "1.6.0"
 RELATIONAL_ID = "4f8b2d19-6c3a-4e7f-9b5d-1a2c8e4f7b31"
 _105_SERIES = ("105", "105a", "105db")
 
