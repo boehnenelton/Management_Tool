@@ -9,7 +9,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%2F%20Android%20Termux-blue.svg)](#prerequisites--setup)
 [![Format](https://img.shields.io/badge/Format-BEJSON%20104a%20%2F%20105-DE2626.svg)](#technical-specifications--storage)
 [![Terminal](https://img.shields.io/badge/Discipline-57--Column%20Portrait-black.svg)](#terminal-display--color-standards)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](#license--attribution)
+[![License](https://img.shields.io/badge/License-PolyForm%20Noncommercial-DE2626.svg)](#license--attribution)
 
 ---
 
@@ -316,4 +316,5 @@ python3 management_tool.py --select-mode 99  # verifies uppercase red error outp
 
 Authored by **Elton Boehnen** (`boehnenelton2024@gmail.com`).  
 Project Website: [boehnenelton2024.pages.dev](https://boehnenelton2024.pages.dev) · GitHub: [boehnenelton](https://github.com/boehnenelton)  
-Licensed under the **MIT License**.
+Licensed under the **PolyForm Noncommercial License 1.0.0** ([`LICENSE`](LICENSE) · [SPDX: PolyForm-Noncommercial-1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0)).  
+All rights reserved. Personal, educational, and research use permitted. Commercial use prohibited without explicit license from the author.
