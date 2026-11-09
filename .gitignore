@@ -27,6 +27,8 @@ Global_Logs/
 logs/
 **/logs/**
 data/logs/
+data/*.txt
+
 
 # 2. Notes: runtime MFDB tables, note contents, and static website builds
 data/mfdb/

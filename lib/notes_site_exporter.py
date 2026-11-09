@@ -118,6 +118,152 @@ a:hover { color: var(--accent-red); }
 .header-link { font-size: 0.8rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.2rem; }
 .header-link:hover { color: var(--accent-red); }
 
+/* Settings Cog Button */
+.settings-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.settings-btn:hover, .settings-btn:focus { border-color: var(--accent-red); color: var(--accent-red); outline: none; }
+
+/* Sub-Header Horizontal Dock Strip */
+.sub-header-dock {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.35rem 1rem;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+.dock-link {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.dock-link:hover { color: var(--accent-red); }
+
+/* Wiki-Style 2-Column Link Grid of Categories */
+.wiki-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin: 1rem 0 2rem;
+}
+@media (max-width: 640px) {
+  .wiki-category-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.wiki-category-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--accent-red);
+  border-radius: 4px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.wiki-category-card:hover {
+  background: var(--bg-elevated);
+  border-color: var(--accent-red);
+}
+.wiki-category-name {
+  font-weight: 700;
+  color: #fff;
+  font-size: 0.95rem;
+}
+.wiki-category-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  background: var(--bg-elevated);
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+}
+
+/* Full Overlay Settings */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 7, 11, 0.96);
+  backdrop-filter: blur(8px);
+  z-index: 250;
+  display: none;
+  flex-direction: column;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+.settings-overlay.active {
+  display: flex;
+}
+.settings-modal-container {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+.settings-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.settings-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+.settings-close-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.settings-close-btn:hover {
+  border-color: var(--accent-red);
+  color: #fff;
+}
+.settings-section-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.settings-section-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+.settings-section-card p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
 /* Container & Layout */
 .container { max-width: 1040px; margin: 0 auto; width: 100%; padding: 1rem 1rem 3rem; flex: 1; }
 .page-bar {
@@ -363,9 +509,32 @@ DRAWER_JS: str = """
   if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
   if (backdrop) backdrop.addEventListener('click', closeDrawer);
 
+  // Settings modal toggle
+  var settingsBtn = document.getElementById('settingsBtn');
+  var settingsOverlay = document.getElementById('settingsOverlay');
+  var settingsClose = document.getElementById('settingsClose');
+
+  function openSettings() {
+    if (settingsOverlay) {
+      settingsOverlay.classList.add('active');
+      if (settingsClose) settingsClose.focus();
+    }
+  }
+
+  function closeSettings() {
+    if (settingsOverlay) {
+      settingsOverlay.classList.remove('active');
+      if (settingsBtn) settingsBtn.focus();
+    }
+  }
+
+  if (settingsBtn) settingsBtn.addEventListener('click', openSettings);
+  if (settingsClose) settingsClose.addEventListener('click', closeSettings);
+
   window.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && drawer && drawer.classList.contains('active')) {
-      closeDrawer();
+    if (e.key === 'Escape') {
+      if (drawer && drawer.classList.contains('active')) closeDrawer();
+      if (settingsOverlay && settingsOverlay.classList.contains('active')) closeSettings();
     }
   });
 
@@ -416,9 +585,9 @@ class NotesSiteExporter:
 
         # Dynamic configuration bindings
         self.site_title: str = self.config.get("site_title", "Notes Compendium")
-        self.site_tagline: str = self.config.get("site_tagline", "Architecture & Technical Knowledge Hub")
+        self.site_tagline: str = self.config.get("site_tagline", "Notes - Main Hub")
         self.site_base_url: str = self.config.get("site_base_url", "https://boehnenelton2024.pages.dev/notes").rstrip("/")
-        self.site_desc: str = self.config.get("site_description", "Authoritative technical notes, BEJSON specifications, and development logs.")
+        self.site_desc: str = self.config.get("site_description", "Technical notes, specifications, and development logs.")
         self.author_name: str = self.config.get("author_name", "Elton Boehnen")
         self.author_email: str = self.config.get("author_email", "boehnenelton2024@gmail.com")
         self.author_site: str = self.config.get("author_site", "https://boehnenelton2024.pages.dev")
@@ -541,7 +710,7 @@ class NotesSiteExporter:
             '    <div class="nav-group-title">Portal</div>',
             f'    <a href="{root_rel_path}index.html" class="nav-item">Master Hub</a>',
             f'    <a href="{root_rel_path}sitemap.html" class="nav-item">Site Map</a>',
-            '    <div class="nav-group-title">Taxonomies</div>'
+            '    <div class="nav-group-title">Categories</div>'
         ]
 
         for cat in categories:
@@ -554,7 +723,7 @@ class NotesSiteExporter:
             cat_link = f"{root_rel_path}{c_slug}/index.html"
             drawer_html.append(
                 f'    <a href="{cat_link}" class="nav-item{active_class}"{aria_current}>'
-                f'      <span>{c_name}</span>'
+                f'      <span>Notes - {c_name}</span>'
                 f'      <span class="nav-count">{c_count}</span>'
                 f'    </a>'
             )
@@ -566,27 +735,55 @@ class NotesSiteExporter:
         return "\n".join(drawer_html)
 
     def render_site_header(self, root_rel_path: str) -> str:
-        """Render sticky top header with hamburger menu, brand badge, and social links."""
-        github_link = f'<a href="{html.escape(self.author_github)}" target="_blank" rel="noopener" class="header-link" aria-label="GitHub">GitHub ↗</a>' if self.author_github else ''
-        author_link = f'<a href="{html.escape(self.author_site)}" target="_blank" rel="noopener" class="header-link" aria-label="Author Website">Site ↗</a>' if self.author_site else ''
+        """
+        Render simple, purpose-driven top header row:
+        [Hamburger Button] [App Title] [Settings Cog] left-to-right.
+        All secondary links and utilities sit on an overflow dock strip directly below.
+        """
+        github_link = f'<a href="{html.escape(self.author_github)}" target="_blank" rel="noopener" class="dock-link" aria-label="GitHub">GitHub ↗</a>' if self.author_github else ''
+        author_link = f'<a href="{html.escape(self.author_site)}" target="_blank" rel="noopener" class="dock-link" aria-label="Author Website">Site ↗</a>' if self.author_site else ''
 
         return f"""
 <a href="#mainContent" class="skip-link">Skip to main content</a>
 <header class="site-header" role="banner">
   <div class="header-left">
     <button id="menuToggle" class="menu-btn" aria-expanded="false" aria-controls="navDrawer" aria-label="Toggle navigation menu">
-      <span aria-hidden="true">☰</span> <span>Menu</span>
+      <span aria-hidden="true">☰</span>
     </button>
     <a href="{root_rel_path}index.html" class="brand-link" aria-label="{html.escape(self.site_title)} Home">
       <span class="brand-badge">BEJSON</span> {html.escape(self.site_title)}
     </a>
   </div>
-  <nav class="header-right" role="navigation" aria-label="Quick Links">
-    <a href="{root_rel_path}sitemap.html" class="header-link">Site Map</a>
-    {author_link}
-    {github_link}
-  </nav>
+  <div class="header-right">
+    <button id="settingsBtn" class="settings-btn" aria-label="Open settings" title="Settings">
+      <span aria-hidden="true">⚙</span>
+    </button>
+  </div>
 </header>
+<nav class="sub-header-dock" aria-label="Secondary Navigation">
+  <a href="{root_rel_path}index.html" class="dock-link">Main Hub</a>
+  <a href="{root_rel_path}sitemap.html" class="dock-link">Site Map</a>
+  {author_link}
+  {github_link}
+</nav>
+
+<div id="settingsOverlay" class="settings-overlay" role="dialog" aria-modal="true" aria-label="Application Settings" tabindex="-1">
+  <div class="settings-modal-container">
+    <div class="settings-modal-header">
+      <h2 class="settings-modal-title">Settings</h2>
+      <button id="settingsClose" class="settings-close-btn" aria-label="Close settings">&times;</button>
+    </div>
+    <div class="settings-section-card">
+      <h3>Appearance & Theme</h3>
+      <p>Theme: BEJSON Tri-Color Dark (#05070B / #F1F5F9 / #DE2626).</p>
+      <p style="color: var(--text-dim); font-size: 0.75rem;">Optimized for mobile-first OLED and high-contrast technical reading.</p>
+    </div>
+    <div class="settings-section-card">
+      <h3>Export & Offline Storage</h3>
+      <p>Zero-dependency static export format. Compatible with local file systems and offline Termux browsing.</p>
+    </div>
+  </div>
+</div>
 """
 
     def render_site_footer(self) -> str:
@@ -684,7 +881,7 @@ class NotesSiteExporter:
       <div class="breadcrumbs">
         <a href="{root_rel}index.html">Notes</a>
         <span class="sep" aria-hidden="true">/</span>
-        <a href="../index.html">{cat_name}</a>
+        <a href="../index.html">Notes - {cat_name}</a>
         <span class="sep" aria-hidden="true">/</span>
         <span class="current" aria-current="page">{note_title}</span>
       </div>
@@ -699,7 +896,7 @@ class NotesSiteExporter:
       <div class="tags-row" aria-label="Note Tags">{tags_bar}</div>
       <h1 class="article-title">{note_title}</h1>
       <div class="action-strip">
-        <span style="color: var(--text-dim); font-size: 0.75rem;">Category: <a href="../index.html" style="color: var(--accent-red); font-weight:600;">{cat_name}</a></span>
+        <span style="color: var(--text-dim); font-size: 0.75rem;">Category: <a href="../index.html" style="color: var(--accent-red); font-weight:600;">Notes - {cat_name}</a></span>
         <div style="display: flex; gap: 0.5rem;">
           <a href="{raw_md_filename}" download class="action-btn" aria-label="Download raw markdown file">Raw ⤓</a>
           <button id="copyRawBtn" class="action-btn" aria-label="Copy markdown content to clipboard">Copy MD</button>
@@ -741,7 +938,7 @@ class NotesSiteExporter:
         relative_canonical = f"{cat_slug}/index.html"
 
         seo_head = self.render_seo_head(
-            page_title=category["cat_name"],
+            page_title=f"Notes - {category['cat_name']}",
             page_description=category.get("cat_description") or f"Notes collection for {cat_name}",
             relative_canonical_path=relative_canonical,
             page_type="website"
@@ -783,7 +980,7 @@ class NotesSiteExporter:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{cat_name} · Categories · {html.escape(self.site_title)}</title>
+  <title>Notes - {cat_name} · {html.escape(self.site_title)}</title>
   {seo_head}
   <style>{SITE_CSS}</style>
 </head>
@@ -796,15 +993,12 @@ class NotesSiteExporter:
       <div class="breadcrumbs">
         <a href="{root_rel}index.html">Notes</a>
         <span class="sep" aria-hidden="true">/</span>
-        <span class="current" aria-current="page">{cat_name}</span>
-      </div>
-      <div class="telemetry-strip">
-        <span>{len(category_notes)} note(s)</span>
+        <span class="current" aria-current="page">Notes - {cat_name}</span>
       </div>
     </nav>
 
     <div style="margin-bottom: 1rem;">
-      <h1 style="font-size: 1.6rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem;">{cat_name}</h1>
+      <h1 style="font-size: 1.6rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem;">Notes - {cat_name}</h1>
       <p style="color: var(--text-muted); font-size: 0.875rem;">{cat_desc}</p>
     </div>
 
@@ -842,27 +1036,21 @@ class NotesSiteExporter:
             page_type="website"
         )
 
-        # Build category cards
-        category_cards = []
+        # Build clean wiki-style 2-column link grid of categories
+        category_wiki_links = []
         for cat in categories:
             c_name = html.escape(cat["cat_name"])
             c_slug = cat["cat_slug"]
             c_count = cat["note_count"]
-            c_desc = html.escape(cat.get("cat_description") or "Collection of categorized notes.")
-            category_cards.append(f"""
-      <div class="card" role="region" aria-label="Category: {c_name}">
-        <div class="card-header">
-          <a href="{c_slug}/index.html" class="card-title">{c_name}</a>
-          <span class="card-badge" style="background: rgba(222, 38, 38, 0.15); color: #F87171;">{c_count} notes</span>
-        </div>
-        <p class="card-desc">{c_desc}</p>
-        <div class="card-meta">
-          <a href="{c_slug}/index.html" style="color: var(--accent-red); font-weight:600;" aria-label="Browse notes in {c_name}">Browse Category →</a>
-        </div>
-      </div>
+            plural = "" if c_count == 1 else "s"
+            category_wiki_links.append(f"""
+      <a href="{c_slug}/index.html" class="wiki-category-card" aria-label="Notes - {c_name} ({c_count} note{plural})">
+        <span class="wiki-category-name">Notes - {c_name}</span>
+        <span class="wiki-category-count">{c_count} note{plural}</span>
+      </a>
 """)
 
-        cards_body = "\n".join(category_cards)
+        wiki_grid_body = "\n".join(category_wiki_links)
 
         # Recent notes table
         recent_rows = []
@@ -875,7 +1063,7 @@ class NotesSiteExporter:
             recent_rows.append(f"""
         <tr>
           <td><a href="{c_slug}/{n_slug}/index.html" style="font-weight:600;">{n_title}</a></td>
-          <td><a href="{c_slug}/index.html" style="color: var(--text-dim);">{c_name}</a></td>
+          <td><a href="{c_slug}/index.html" style="color: var(--text-dim);">Notes - {c_name}</a></td>
           <td style="color: var(--text-dim); text-align: right;">{n_date}</td>
         </tr>
 """)
@@ -887,7 +1075,7 @@ class NotesSiteExporter:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{html.escape(self.site_title)} · {html.escape(self.site_tagline)}</title>
+  <title>Notes - Main Hub · {html.escape(self.site_title)}</title>
   {seo_head}
   <style>{SITE_CSS}</style>
 </head>
@@ -898,7 +1086,7 @@ class NotesSiteExporter:
   <main id="mainContent" class="container" role="main">
     <div class="page-bar">
       <div class="breadcrumbs">
-        <span class="current" aria-current="page">Notes Knowledge Portal</span>
+        <span class="current" aria-current="page">Notes - Main Hub</span>
       </div>
       <div class="telemetry-strip" aria-label="Portal Metrics">
         <span>{total_cats} categories</span>
@@ -909,17 +1097,21 @@ class NotesSiteExporter:
       </div>
     </div>
 
-    <div style="margin: 1.5rem 0 1rem;">
-      <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem;">{html.escape(self.site_tagline)}</h1>
+    <div style="margin: 1.5rem 0 0.5rem;">
+      <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem;">Notes - Main Hub</h1>
       <p style="color: var(--text-muted); font-size: 0.875rem;">{html.escape(self.site_desc)}</p>
     </div>
 
-    <div class="hub-grid" style="margin-bottom: 2rem;" role="region" aria-label="Categories Hub Grid">
-      {cards_body}
+    <div style="margin: 1.5rem 0 0.5rem;">
+      <h2 style="font-size: 1.15rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.5px;">Categories</h2>
+    </div>
+
+    <div class="wiki-category-grid" role="region" aria-label="Categories Link Grid">
+      {wiki_grid_body}
     </div>
 
     <div style="margin: 2rem 0 0.75rem;">
-      <h2 style="font-size: 1.3rem; font-weight: 700; color: #fff;">Recent Notes</h2>
+      <h2 style="font-size: 1.15rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.5px;">Recent Notes</h2>
     </div>
     <div class="table-container" role="region" aria-label="Recent Notes Table">
       <table>
@@ -970,7 +1162,7 @@ class NotesSiteExporter:
             c_slug = cat["cat_slug"]
             c_name = html.escape(cat["cat_name"])
             cat_url = f"{self.site_base_url}/{c_slug}/index.html"
-            sitemap_items.append(f'  <li style="margin-top: 0.75rem;"><a href="{c_slug}/index.html" style="font-weight:600; color: var(--accent-red);">📁 {c_name}</a></li>')
+            sitemap_items.append(f'  <li style="margin-top: 0.75rem;"><a href="{c_slug}/index.html" style="font-weight:600; color: var(--accent-red);">📁 Notes - {c_name}</a></li>')
             xml_urls.append(f'  <url><loc>{cat_url}</loc><changefreq>daily</changefreq><priority>0.8</priority></url>')
 
             cat_notes = [n for n in all_notes if n["cat_name"].lower() == cat["cat_name"].lower()]
@@ -1016,7 +1208,7 @@ class NotesSiteExporter:
     </nav>
 
     <article class="article-card" role="article">
-      <h1 class="article-title" style="margin-bottom: 1.25rem;">Complete Taxonomy Site Map</h1>
+      <h1 class="article-title" style="margin-bottom: 1.25rem;">Site Map</h1>
       <div class="bejson-cms-article">
         {tree_html}
       </div>

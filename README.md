@@ -2,18 +2,62 @@
   <img src="assets/Management_CLI_Banner_1280x640.svg" alt="Management CLI Header Banner Logo" width="100%" />
 </div>
 
-# Management Tool Suite [Unified Router & Subsystem Hub]
+# System Management Tool Suite
 
-> **Author**: Elton Boehnen · boehnenelton2024@gmail.com · [boehnenelton2024.pages.dev](https://boehnenelton2024.pages.dev) · [GitHub](https://github.com/boehnenelton)  
-> **Format**: BEJSON 104a / 105 Standards & MFDB v1.31 Multi-File Database  
-> **Interface**: 57-Column Portrait Terminal Discipline · Truecolor (#DE2626)  
-> **Platform**: Linux / Android Termux (ARM64) Portable Runtime  
+> Unified master router, structured logging, technical report indexing, categorized notes management, stateful job execution, and launch reminder automation.
+
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%2F%20Android%20Termux-blue.svg)](#prerequisites--setup)
+[![Format](https://img.shields.io/badge/Format-BEJSON%20104a%20%2F%20105-DE2626.svg)](#technical-specifications--storage)
+[![Terminal](https://img.shields.io/badge/Discipline-57--Column%20Portrait-black.svg)](#terminal-display--color-standards)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](#license--attribution)
 
 ---
 
-## 1. Architectural Overview
+## Table of Contents
 
-The **Management Tool Suite** provides a unified operational interface for system administration, structured logging, technical report indexing, categorized notes management, and stateful job execution across 4 dedicated operational modes:
+- [Prerequisites & Setup](#prerequisites--setup)
+- [Architecture & Subsystem Routing](#architecture--subsystem-routing)
+- [Operational Modes](#operational-modes)
+  - [Mode 1: Logging Tool](#mode-1-logging-tool-logging_toolpy)
+  - [Mode 2: Research Reports Indexer](#mode-2-research-reports-indexer-report_indexerpy)
+  - [Mode 3: Categorized Notes Manager](#mode-3-categorized-notes-manager-notes_toolpy)
+  - [Mode 4: Stateful Job Chamber & Standing Maintenance](#mode-4-stateful-job-chamber--standing-maintenance-job_toolpy)
+  - [Mode 5: Launch Reminders & Active Tasks](#mode-5-launch-reminders--active-tasks-reminder_toolpy)
+  - [Mode 6: Taxonomy Cartographer](#mode-6-taxonomy-cartographer)
+- [Terminal Display & Color Standards](#terminal-display--color-standards)
+- [CLI Reference Guide](#cli-reference-guide)
+- [Repository Structure](#repository-structure)
+- [Verification & Testing](#verification--testing)
+- [License & Attribution](#license--attribution)
+
+---
+
+## Prerequisites & Setup
+
+### Environment Requirements
+- **Python**: 3.10 or higher
+- **Operating System**: Linux / Android Termux (ARM64, x86_64)
+- **Terminal**: Modern ANSI terminal supporting 24-bit Truecolor (`COLORTERM=truecolor` or `COLORTERM=24bit`) with automatic fallback to standard 16-color ANSI bold red.
+
+### Quick Start
+Clone the repository and verify environment execution:
+
+```bash
+git clone https://github.com/boehnenelton/Management_Tool.git
+cd Management_Tool
+
+# Display unified system status
+python3 management_tool.py --status
+
+# Inspect AI-optimized command guide
+python3 management_tool.py --help
+```
+
+---
+
+## Architecture & Subsystem Routing
+
+The **Management Tool Suite** provides a single deterministic entry router that coordinates system logging, technical documentation indexing, hierarchical notes persistence, stateful job tracking, and startup task reminders:
 
 ```
                       ┌────────────────────────────────────────┐
@@ -21,42 +65,41 @@ The **Management Tool Suite** provides a unified operational interface for syste
                       │         [UNIFIED MASTER ROUTER]        │
                       └───────────────────┬────────────────────┘
                                           │
-       ┌──────────────┬───────────────────┼───────────────────┐
-       │              │                   │                   │
-       ▼              ▼                   ▼                   ▼
-┌─────────────┐┌──────────────┐   ┌───────────────┐   ┌──────────────┐
-│   Mode 1    ││    Mode 2    │   │    Mode 3     │   │    Mode 4    │
-│Logging Tool ││Report Indexer│   │  Notes Tool   │   │   Job Tool   │
-│(logging_tool││(report_index)│   │ (notes_tool)  │   │  (job_tool)  │
-└──────┬──────┘└──────┬───────┘   └───────┬───────┘   └──────┬───────┘
-       │              │                   │                  │
-       ▼              ▼                   ▼                  ▼
-• BEJSON 105   • Papers Index     • MFDB v1.31        • Saved Jobs
-• Daily UTC    • Categorization   • Loaded Chamber    • Task Stepping
-• HTML Reports • Query & Search   • Strict Markdown   • Urgent Deploy
-• Log Rotation • Paper Pulling    • Web Editor (Flask)• Status Sync
+       ┌──────────────┬───────────────────┼───────────────────┬──────────────┬──────────────┐
+       │              │                   │                   │              │              │
+       ▼              ▼                   ▼                   ▼              ▼              ▼
+┌─────────────┐┌──────────────┐   ┌───────────────┐   ┌──────────────┐┌──────────────┐┌──────────────┐
+│   Mode 1    ││    Mode 2    │   │    Mode 3     │   │    Mode 4    ││    Mode 5    ││    Mode 6    │
+│Logging Tool ││Report Indexer│   │  Notes Tool   │   │   Job Tool   ││Reminder Tool ││   Taxonomy   │
+│(logging_tool││(report_index)│   │ (notes_tool)  │   │  (job_tool)  ││ (remind.sh)  ││ (cartography)│
+└──────┬──────┘└──────┬───────┘   └───────┬───────┘   └──────┬───────┘└──────┬───────┘└──────┬───────┘
+       │              │                   │                  │               │               │
+       ▼              ▼                   ▼                  ▼               ▼               ▼
+• BEJSON 105   • Papers Index     • MFDB v1.31        • Job Registry • Active Queue  • AST Analysis
+• Daily UTC    • Categorization   • Loaded Chamber    • Maintenance  • Completed Arc • Symbol Graphs
+• HTML Reports • Query & Search   • Wiki Categories   • Task Stepping• Termux Launch • Entity Prefixes
+• Log Rotation • Paper Pulling    • Web Editor (Flask)• Auto Recovery• Clean Filter  • Route Matrix
 ```
-
-> **External Tool Routing**: Taxonomy Cartography is maintained independently as a standalone tool in `Admin/Dev/Tools/Taxonomy_Cartographer` and can be executed directly or invoked via `./management.sh tax`.
 
 ---
 
-## 2. Subsystems & Modes
+## Operational Modes
 
-### Mode 1: Stateful Global Logging Tool (`logging_tool.py`)
-- **Persistence**: Daily UTC partitions under `$GLOBAL_LOGS/Log-<YYYY-MM-DD>.bejson` and dual-path encrypted secure sinks (`$GLOBAL_LOGS_SECURE/Log-<YYYY-MM-DD>-secure.bejson`).
-- **Loaded Chamber Pattern**: Lock session metadata (`subsystem`, `category`, `actor`, `session_id`) into persistent state once, emitting subsequent logs with zero argument friction.
-- **Single-Page HTML & Markdown Reports**: Output log streams from schema into structured templated Markdown and convert into standalone HTML reports with BECSS Tri-Color styling via `md2html`.
-- **Integrity Gates**: Structural validation, SHA-256 hash chaining, checksum verification, and automated rotation.
+### Mode 1: Logging Tool (`logging_tool.py`)
+- **Persistence**: Daily UTC date partitions backed by standardized records and dual-path encrypted secure sinks.
+- **Context Machine**: Locks session metadata (`subsystem`, `category`, `actor`, `session_id`) into persistent state once, emitting subsequent logs with zero argument friction.
+- **HTML & Markdown Reporting**: Serializes log streams into templated Markdown and compiles standalone responsive HTML reports via `lib_md_to_html.py`.
+- **Integrity Gates**: Structural validation, SHA-256 hash chaining, checksum verification, and automatic daily rotation.
 
 ### Mode 2: Research Reports Indexer (`report_indexer.py`)
-- **Persistence**: Central index table (`data/reports_index.bejson`) backed by BEJSON 104a.
+- **Persistence**: Central index table (`data/reports_index.bejson`) backed by tabular record schemas.
 - **Workflow**: Catalog, categorize, import, pull, view, and search technical specifications, audit papers, and research documents.
+- **Chamber Locking**: Lock an active entry or category into chamber context to execute operations like viewing, editing, or pulling without repeating identifiers.
 
 ### Mode 3: Categorized Notes Manager (`notes_tool.py`)
-- **Persistence**: Dedicated Multi-File Database (MFDB v1.31) with central manifest (`data/mfdb/104a.mfdb.bejson`) coordinating child entity tables (`category.bejson`, `note.bejson`) linked via `Parent_Hierarchy`.
-- **Loaded Chamber Pattern**: Lock active category and active note persistently in `config/state.json`. Commands (`--view`, `--export`, `--add-tag`, `--remove-tag`, `--set-category`, `--note-delete`) execute against the loaded note without repeating identifiers.
-- **Strict Markdown Header Specification**: Exported notes strictly prepend metadata headers:
+- **Persistence**: Multi-File Database (MFDB v1.31) with central manifest coordinating entity tables (`category.bejson`, `note.bejson`) linked by parent hierarchy.
+- **Context Machine**: Lock active category and active note persistently in configuration state. Operations execute directly on loaded note targets.
+- **Strict Markdown Header Standard**: Exported and imported notes adhere to literal metadata headers:
   ```markdown
   #tag1 #tag2 #tag3
   # Note Title
@@ -64,148 +107,213 @@ The **Management Tool Suite** provides a unified operational interface for syste
 
   Note body content here...
   ```
-- **Markdown Ingestion**: Ingests external `.md` files, parsing hashtags, title, and category headers into MFDB records automatically.
-- **Static Documentation Site Generator**: Compiles entire notes database into clean SEO domain/taxonomy website hierarchy:
-  - Layout: `notes/<category>/<note-slug>/index.html` + `<note-slug>.md`
-  - Category Feeds: `<category>/index.html` and `feed.html` with instant live search
-  - Master Portal Hub: `index.html`
-  - Accessible Sitemaps: `sitemap.html`, `sitemap.xml`, and `robots.txt`
-  - Zero External Dependencies: Embedded responsive dark theme (`#05070B`, `#0B0F17`, `#DE2626`), Open Graph, Schema.org JSON-LD, and ARIA landmark accessibility.
-- **Interactive Web Editor Workspace (`notes_web_server.py`)**: Localhost Flask workspace running on port 5050 with dual-pane real-time markdown editor, live HTML preview, and chamber state synchronization per Policy §8.1-§8.7 (launch via `./notes.sh --web` or `./management.sh note --web`).
-- **CLI Configuration Management**: Inspect and edit site parameters, author profiles, and build flags via `--config` and `--config-set <key> <val>`.
+- **Static Documentation Site Generator (`notes_site_exporter.py`)**: Compiles notes into a clean, searchable static site:
+  - Layout: `notes/<category>/<note-slug>/index.html` + raw `<note-slug>.md`
+  - Navigation: Clean wiki-style 2-column link grid of categories on main hub; category headers strictly use `Notes - <Category>`.
+  - Accessible Assets: Full `sitemap.html`, `sitemap.xml`, and `robots.txt`.
+- **Interactive Web Editor Workspace (`notes_web_server.py`)**: Localhost workspace running on port 5050 with dual-pane real-time markdown editor, live preview, and chamber state synchronization.
 
-### Mode 4: Stateful Job Chamber & Urgent Deployment Manager (`job_tool.py`)
-- **Persistence**: Saved job documents and blueprints in `data/saved_jobs/` (`.bejson` and `.md`).
-- **Loaded Chamber Pattern**: Select and lock an active job (`--select-job <id>`), inspect task breakdown (`--view`), step-toggle tasks (`--toggle-task <idx>`), append tasks (`--add-task "<name>"`), and deploy directly into `/storage/emulated/0/Admin/System/Job_Management/Jobs` (`--deploy`).
-- **Urgent Queue Telemetry**: Live inspection of urgent intake (`--list-deployed`), saved templates (`--list-saved`), and completed archives (`--list-completed`).
+### Mode 4: Stateful Job Chamber & Standing Maintenance (`job_tool.py`)
+- **Active Job Registry**: Tracks active jobs in `data/job_registry.104a.bejson` with sequential tasks, priority classifications, and instructions.
+- **Completed Archive**: Atomically archives completed jobs into `data/completed_jobs_registry.104a.bejson` with resolution summaries and execution timestamps.
+- **Standing Maintenance Jobs Registry (`data/maintenance_jobs_registry.104a.bejson`)**:
+  - Standing maintenance tasks are perpetual (status remains `standing`).
+  - Audited on session start via `--init-check`.
+  - Directly queryable via `--maintenance`.
+  - Execution runs are recorded via `--record-maintenance <id> [--maintenance-result <summary>]`, updating `run_count`, `last_run_timestamp`, and `last_result`.
+- **Loaded Chamber Workflow**: Lock active job into chamber (`--select <id>`), inspect task cards (`--view`), toggle task states (`--toggle-task <idx>`), and add tasks (`--add-task <text>`).
+
+### Mode 5: Launch Reminders & Active Tasks (`reminder_tool.py`)
+- **Dual Registries**:
+  - Active Queue: `data/reminders.104a.bejson`
+  - Completed Archive: `data/completed_reminders.104a.bejson`
+- **Auto-Removal on Completion**: Marking a reminder complete atomically removes it from the active queue and transfers it to the completed archive.
+- **Termux Launch Integration**: Surface active reminders directly upon terminal initialization. When zero active reminders exist, the check produces zero terminal output to avoid terminal clutter.
+- **Priorities**: `urgent`, `high`, `normal`, `low`.
+
+### Mode 6: Taxonomy Cartographer
+- External subsystem bridge routing to repository cartography, AST parsing, and symbol taxonomy scanning.
 
 ---
 
-## 3. CLI Command Guide
+## Terminal Display & Color Standards
+
+All output strictly implements 57-column portrait terminal discipline with a high-contrast tri-color palette:
+
+| Element | Format Specification | ANSI / Hex Sequence |
+|---|---|---|
+| **Headers & Labels** | Literal Functional Headers & Field Keys | `#DE2626` Truecolor (`\033[38;2;222;38;38m`) / ANSI Bold Red (`\033[1;31m`) |
+| **Status Messages (Positive)** | `[✓]` with message in **white lowercase** | `\033[1;37m[✓] message in lowercase\033[0m` |
+| **Failures & Errors** | `[✗]` with message in **#DE2626 UPPERCASE RED** | `\033[38;2;222;38;38m[✗] ERROR: MESSAGE IN UPPERCASE\033[0m` |
+| **Neutral Content** | Descriptions, data values, timestamps, dividers | Standard White (`\033[0;37m` / `\033[1;37m`) |
+
+---
+
+## CLI Reference Guide
 
 ### Master Router Operations
 
 ```bash
-# Display unified chamber status across all subsystems
-./management.sh --status
+# Display 57-column unified status banner
+python3 management_tool.py --status
 
-# Select active operational mode (1, 2, 3, or 4)
-./management.sh --select-mode logging    # Mode 1
-./management.sh --select-mode reports    # Mode 2
-./management.sh --select-mode notes      # Mode 3
-./management.sh --select-mode jobs       # Mode 4
+# List supported operational modes
+python3 management_tool.py --list-modes
 
-# Direct Subsystem Execution
-./management.sh log [arguments...]      # Route to logging_tool
-./management.sh report [arguments...]   # Route to report_indexer
-./management.sh note [arguments...]     # Route to notes_tool
-./management.sh job [arguments...]      # Route to job_tool
-./management.sh tax [arguments...]      # Route to Taxonomy_Cartographer (Admin Dev)
+# Switch active persistent mode (1 to 6)
+python3 management_tool.py --select-mode 1    # logging
+python3 management_tool.py --select-mode 2    # reports
+python3 management_tool.py --select-mode 3    # notes
+python3 management_tool.py --select-mode 4    # jobs
+python3 management_tool.py --select-mode 5    # reminders
+python3 management_tool.py --select-mode 6    # taxonomy
+
+# AI-optimized context specification
+python3 management_tool.py --help
+python3 management_tool.py --agent-context
 ```
 
-### Logging & Report Generation (Mode 1)
+### Reminders & Active Tasks (Mode 5)
+
+```bash
+# Add reminder (priority: urgent, high, normal, low)
+python3 management_tool.py remind add "Update release documentation" -p high
+
+# Complete and remove reminder (by ID or index)
+python3 management_tool.py remind done 1
+python3 management_tool.py remind done rem_20261109_024441
+
+# List active reminders
+python3 management_tool.py remind list
+
+# View completed reminder archive
+python3 management_tool.py remind completed
+
+# Termux startup banner check
+python3 management_tool.py remind print
+```
+
+### Job Chamber & Maintenance (Mode 4)
+
+```bash
+# Session startup initialization audit
+python3 management_tool.py job --init-check
+
+# Query standing maintenance jobs
+python3 management_tool.py job --maintenance
+python3 management_tool.py job --record-maintenance maint-001 -r "verified"
+
+# Job queue discovery
+python3 management_tool.py job --list
+python3 management_tool.py job --list-completed
+python3 management_tool.py job --query "optimization"
+
+# Chamber locking & task stepping
+python3 management_tool.py job --select "job_id_or_name"
+python3 management_tool.py job --view
+python3 management_tool.py job --add-task "Verify O(1) field cache"
+python3 management_tool.py job --toggle-task 1
+
+# Complete job and move to archive
+python3 management_tool.py job --complete-job -m "All tasks completed and verified"
+```
+
+### Structured Logging (Mode 1)
 
 ```bash
 # Write structured log entry
-./management.sh log write -m "Completed refactor" -l "INFO" -k "app.update" -s "Core"
+python3 management_tool.py log write -m "Refactor complete" -l INFO -s Core
 
-# Lock chamber context
-./management.sh log context --set-subsystem "BEJSON_CMS" --set-category "feature"
+# Read recent log entries
+python3 management_tool.py log read --min-level WARN --limit 20
 
-# Query daily logs
-./management.sh log read --min-level WARN --limit 20
-
-# Compile Single-Page HTML Report via md2html
-./management.sh log report --limit 50 --theme dark
-./management.sh log report --subsystem Core --md-out exports/core_report.md
+# Compile standalone HTML log report
+python3 management_tool.py log report --limit 50 --theme dark
 ```
 
-### Categorized Notes Management (Mode 3)
+### Notes Manager (Mode 3)
 
 ```bash
-# Category Management
-./notes.sh --list-categories
-./notes.sh --category-create "Architecture" --desc "System specifications"
-./notes.sh --select-category "Architecture"
+# Category management
+python3 management_tool.py note --list-categories
+python3 management_tool.py note --category-create "Architecture" --desc "System specs"
+python3 management_tool.py note --select-category "Architecture"
 
-# Note Management
-./notes.sh --note-new -t "MFDB Core Spec" -c "Manifests use 104a format." --tags "mfdb,spec"
-./notes.sh --select-note "MFDB Core Spec"
-./notes.sh --add-tag "v131"
-./notes.sh --set-category "General"
+# Note authoring & chamber operations
+python3 management_tool.py note --note-new -t "MFDB Spec" -c "Manifests use 104a." --tags "mfdb,spec"
+python3 management_tool.py note --select-note "MFDB Spec"
+python3 management_tool.py note --add-tag "v140"
+python3 management_tool.py note --export
 
-# Export Markdown (#tag1 #tag2\n# title\n# category\n\ncontent)
-./notes.sh --export
+# Static documentation website build
+python3 management_tool.py note --export-site
 
-# Search across notes
-./notes.sh --query "manifest"
-
-# Compile Static Taxonomy Documentation Website
-./notes.sh --export-site
-./notes.sh --config-set site_title "Technical Knowledge Base"
-./notes.sh --config
+# Launch localhost web editor (port 5050)
+python3 management_tool.py note --web
 ```
 
 ---
 
-### Stateful Job Management (Mode 4)
-
-```bash
-# List saved jobs, deployed urgent jobs, and completed jobs
-./management.sh job --list-saved
-./management.sh job --list-deployed
-./management.sh job --list-completed
-
-# Lock active job into chamber
-./management.sh job --select-job "Cache_Optimization_Suite"
-
-# Inspect and step tasks
-./management.sh job --view
-./management.sh job --toggle-task 1
-./management.sh job --add-task "Verify O(1) field map lookups"
-
-# Deploy staged job into live urgent jobs queue (/storage/emulated/0/Admin/System/Job_Management/Jobs)
-./management.sh job --deploy
-```
-
----
-
-## 4. Repository Structure
+## Repository Structure
 
 ```
-management_tool/
-├── management_tool.py        # Master Router Entry Point
-├── management.sh             # Master Shell Launcher
-├── __main__.py               # Package Directory Invocation Entry Point
-├── logging_tool.py           # Mode 1: Stateful Global Logging Tool
+Management_Tool/
+├── management_tool.py        # Master Router Entry Point (Modes 1-6)
+├── management.sh             # Master Shell Launcher Wrapper
+├── __main__.py               # Package Invocation Entry Point
+├── logging_tool.py           # Mode 1: Structured Logging Engine
 ├── report_indexer.py         # Mode 2: Research Reports Indexer
 ├── notes_tool.py             # Mode 3: Categorized Notes MFDB Manager
 ├── notes.sh                  # Mode 3 Shell Launcher
-├── notes_web_server.py       # Mode 3: Zero-Cloud Flask Notes Web Editor (port 5050)
-├── job_tool.py               # Mode 4: Stateful Job Chamber & Urgent Deployment Manager
-├── bejson_project.json       # Project Identity & Version Descriptor
-├── .gitignore                # Excludes runtime data, logs, notes, and reports
+├── notes_web_server.py       # Mode 3: Localhost Flask Notes Web Editor (port 5050)
+├── job_tool.py               # Mode 4: Stateful Job Chamber & Maintenance Manager
+├── bejson_project.json       # Project Metadata & Identity Descriptor
+├── .gitignore                # Runtime State, Log & Temp File Exclusions
+├── assets/
+│   └── Management_CLI_Banner_1280x640.svg # Visual Header Graphic
 ├── config/
 │   ├── config.json           # Default System Configuration Store
 │   └── state.json            # Loaded Chamber Persistent Context State
 ├── data/
+│   ├── maintenance_jobs_registry.104a.bejson # Standing Maintenance Tasks Registry
 │   └── saved_jobs/           # Saved Job Documents & Workflow Templates
 ├── dev/
-│   └── flask_notes_editor_plan.md # Subsystem Architecture & Interface Spec
-├── lib/
-│   ├── lib_log_report_generator.py # Markdown & HTML Report Generator
-│   ├── lib_md_to_html.py           # Markdown-to-HTML Parsing Engine
-│   ├── templates/                  # BECSS Tri-Color HTML Templates
-│   ├── notes_mfdb_engine.py        # Notes MFDB Engine & Chamber Machine
-│   ├── notes_site_exporter.py      # Static Documentation Site Generator
-│   ├── lib_bejson_Core_*           # BEJSON Core Primitives & Parsing
-│   └── lib_bejson_Standards_*      # BEJSON 105 Standards Logging Engine
-└── README.md                 # Technical Documentation & Manual
+│   └── flask_notes_editor_plan.md # Subsystem Architecture Specification
+└── lib/
+    ├── lib_log_report_generator.py # Markdown & HTML Report Generator
+    ├── lib_md_to_html.py           # Standalone Markdown-to-HTML Parser
+    ├── templates/                  # High-Contrast Dark HTML Templates
+    ├── notes_mfdb_engine.py        # Notes MFDB Engine & Context Machine
+    ├── notes_site_exporter.py      # Static Documentation Site Generator
+    ├── lib_bejson_Core_*           # BEJSON Core Primitives & Field Map Engine
+    └── lib_bejson_Standards_*      # BEJSON 105 Standards Logging Engine
 ```
 
 ---
 
-## 5. License & Credits
+## Verification & Testing
+
+Verify end-to-end routing, color standards, and subsystem operations:
+
+```bash
+# Status banner check
+python3 management_tool.py --status
+
+# Subsystem delegation checks
+python3 management_tool.py remind list
+python3 management_tool.py job --init-check
+python3 management_tool.py report --status
+python3 management_tool.py note --status
+
+# Mode selection verification
+python3 management_tool.py --select-mode 5
+python3 management_tool.py --select-mode 99  # verifies uppercase red error output
+```
+
+---
+
+## License & Attribution
 
 Authored by **Elton Boehnen** (`boehnenelton2024@gmail.com`).  
-Licensed under the **MIT License** and built for the **BEJSON 104a / 105 Standards** ecosystem.
+Project Website: [boehnenelton2024.pages.dev](https://boehnenelton2024.pages.dev) · GitHub: [boehnenelton](https://github.com/boehnenelton)  
+Licensed under the **MIT License**.
