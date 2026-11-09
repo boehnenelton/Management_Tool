@@ -2,16 +2,22 @@
 """
 Tool Name   : job_tool.py
 Rel. Path   : job_tool.py
-Family      : Job Management / Subsystem 5
-Purpose     : High-density, stateful Job Manager & Urgent Deployment Engine
-              implementing the Loaded Chamber Pattern for managing saved
-              JobMaker BEJSON 104a jobs and Markdown task briefs.
-              Enables listing, creating, selecting (locking into chamber),
-              inspecting, editing, adding tasks, and deploying saved jobs
-              directly into the urgent jobs folder ($JOBS_FOLDER).
-Version     : 1.5.0
+Family      : Job Management / Subsystem 4
+Purpose     : Authoritative BEJSON 104a Job Management Engine & CLI Interface.
+              Stores active and completed jobs directly in formal BEJSON schemas:
+                - Active Registry:    job_registry.104a.bejson
+                - Completed Registry: Completed_Jobs/completed_jobs_registry.104a.bejson
+              Implements the Loaded Chamber Pattern persisting active job ID and
+              subdirectory ('active', 'saved', 'completed').
+              Functions:
+                - Creating jobs with Name, Instructions, Context Notes, Priority
+                - Marking active / inactive (moving between active and saved)
+                - Setting priority (urgent, high, normal, low)
+                - Marking complete (moving to Completed_Jobs & recording in completed registry)
+                - Persistent selection, high-density 57-column viewing, task stepping
+Version     : 1.6.0
 Author      : Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
-Date        : 2026-11-05
+Date        : 2026-11-09
 RELATIONAL_ID : bb348f5c-4862-4e96-b2ea-f57092c2c14d
 """
 
@@ -27,7 +33,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-# ── Self-Locating Path Preambles (Policy §4.1) ────────────────────────────────
+# ── Path Preambles (Policy §4.1 & §4.5) ──────────────────────────────────────
 def get_script_path() -> Path:
     """Resolve and return script directory."""
     return Path(__file__).resolve().parent
@@ -64,691 +70,855 @@ SUBDIVIDER_57: str = "-" * 57
 
 # ── Canonical Environment Resolution (Policy §4.5) ───────────────────────────
 DEFINITIONS_STORE_PATH: Path = Path("/storage/emulated/0/.env/user/definitions.json")
-DEFAULT_JOBS_FOLDER: Path = Path("/storage/emulated/0/Admin/System/Job_Management/Jobs")
-DEFAULT_COMPLETED_JOBS_FOLDER: Path = Path("/storage/emulated/0/Admin/System/Job_Management/Completed_Jobs")
-DEFAULT_TEMPLATES_FOLDER: Path = Path("/storage/emulated/0/Admin/System/Job_Management/Job_Templates")
+DEFAULT_JOB_ROOT: Path = Path("/storage/emulated/0/Admin/System/Job_Management")
+DEFAULT_JOBS_FOLDER: Path = DEFAULT_JOB_ROOT / "Jobs"
+DEFAULT_COMPLETED_FOLDER: Path = DEFAULT_JOB_ROOT / "Completed_Jobs"
+DEFAULT_TEMPLATES_FOLDER: Path = DEFAULT_JOB_ROOT / "Job_Templates"
 
 
-def resolve_canonical_environment_paths() -> Dict[str, Path]:
-    """Resolve environment paths dynamically from definitions store or defaults."""
-    resolved_paths_dictionary: Dict[str, Path] = {
+def resolve_canonical_paths() -> Dict[str, Path]:
+    """Resolve job environment paths dynamically."""
+    paths_map: Dict[str, Path] = {
+        "JOB_ROOT": DEFAULT_JOB_ROOT,
         "JOBS_FOLDER": DEFAULT_JOBS_FOLDER,
-        "COMPLETED_JOBS_FOLDER": DEFAULT_COMPLETED_JOBS_FOLDER,
+        "COMPLETED_JOBS_FOLDER": DEFAULT_COMPLETED_FOLDER,
         "JOB_TEMPLATES": DEFAULT_TEMPLATES_FOLDER,
-        "SAVED_JOBS": LOCAL_SAVED_JOBS_DIRECTORY
+        "SAVED_JOBS": LOCAL_SAVED_JOBS_DIRECTORY,
+        "ACTIVE_REGISTRY": DEFAULT_JOB_ROOT / "job_registry.104a.bejson",
+        "COMPLETED_REGISTRY": DEFAULT_COMPLETED_FOLDER / "completed_jobs_registry.104a.bejson",
     }
 
     if DEFINITIONS_STORE_PATH.exists():
         try:
-            with open(DEFINITIONS_STORE_PATH, "r", encoding="utf-8") as definitions_file_handle:
-                definitions_data_payload: Dict[str, Any] = json.load(definitions_file_handle)
-                definitions_records_values: List[List[Any]] = definitions_data_payload.get("Values", [])
-                for definition_row_record in definitions_records_values:
-                    if isinstance(definition_row_record, list) and len(definition_row_record) >= 2:
-                        variable_name_key: str = str(definition_row_record[0]).strip()
-                        variable_value_path_string: str = str(definition_row_record[1]).strip()
-                        if variable_name_key in ("JOBS_FOLDER", "COMPLETED_JOBS_FOLDER", "JOB_TEMPLATES"):
-                            resolved_paths_dictionary[variable_name_key] = Path(variable_value_path_string)
+            with open(DEFINITIONS_STORE_PATH, "r", encoding="utf-8") as file_handle:
+                doc = json.load(file_handle)
+                for row in doc.get("Values", []):
+                    if isinstance(row, list) and len(row) >= 2:
+                        k, v = str(row[0]).strip(), str(row[1]).strip()
+                        if k == "JOBS_FOLDER":
+                            paths_map["JOBS_FOLDER"] = Path(v)
+                            paths_map["JOB_ROOT"] = Path(v).parent
+                            paths_map["ACTIVE_REGISTRY"] = paths_map["JOB_ROOT"] / "job_registry.104a.bejson"
+                        elif k == "COMPLETED_JOBS_FOLDER":
+                            paths_map["COMPLETED_JOBS_FOLDER"] = Path(v)
+                            paths_map["COMPLETED_REGISTRY"] = Path(v) / "completed_jobs_registry.104a.bejson"
+                        elif k == "JOB_TEMPLATES":
+                            paths_map["JOB_TEMPLATES"] = Path(v)
         except Exception:
             pass
 
-    return resolved_paths_dictionary
+    return paths_map
 
 
-# ── Canonical JobMaker BEJSON 104a Specification Helpers ─────────────────────
-CANONICAL_JOB_FIELDS: List[Dict[str, str]] = [
-    {"name": "task_id", "type": "string"},
-    {"name": "task_order", "type": "integer"},
-    {"name": "task_name", "type": "string"},
-    {"name": "task_description", "type": "string"},
-    {"name": "task_completed", "type": "boolean"},
-    {"name": "audit_enabled", "type": "boolean"},
-    {"name": "audit_passed", "type": "boolean"},
-    {"name": "audit_fail_reason", "type": "string"},
-    {"name": "task_context", "type": "array"},
-    {"name": "task_reference", "type": "array"},
-    {"name": "task_mandatory", "type": "boolean"}
+# ── Canonical BEJSON 104a Schemas ────────────────────────────────────────────
+ACTIVE_REGISTRY_FIELDS: List[Dict[str, str]] = [
+    {"name": "job_id", "type": "string"},
+    {"name": "job_name", "type": "string"},
+    {"name": "priority", "type": "string"},
+    {"name": "status", "type": "string"},
+    {"name": "creation_date", "type": "string"},
+    {"name": "assigned_actor", "type": "string"},
+    {"name": "job_instructions", "type": "string"},
+    {"name": "job_context_notes", "type": "string"},
+    {"name": "task_count", "type": "integer"},
+    {"name": "tasks_completed", "type": "integer"},
+    {"name": "tasks_json", "type": "string"},
+    {"name": "job_file_path", "type": "string"},
+    {"name": "tags", "type": "string"},
+]
+
+COMPLETED_REGISTRY_FIELDS: List[Dict[str, str]] = [
+    {"name": "job_id", "type": "string"},
+    {"name": "job_name", "type": "string"},
+    {"name": "priority", "type": "string"},
+    {"name": "creation_date", "type": "string"},
+    {"name": "completion_date", "type": "string"},
+    {"name": "duration_seconds", "type": "integer"},
+    {"name": "completed_by", "type": "string"},
+    {"name": "resolution_summary", "type": "string"},
+    {"name": "artifacts_produced", "type": "string"},
+    {"name": "job_instructions", "type": "string"},
+    {"name": "job_context_notes", "type": "string"},
+    {"name": "tasks_json", "type": "string"},
+    {"name": "archive_file_path", "type": "string"},
+    {"name": "tags", "type": "string"},
 ]
 
 
-def compile_bejson_field_map(bejson_document_payload: Dict[str, Any]) -> Dict[str, int]:
-    """Compile an O(1) field name to column index lookup cache per Policy §6.2."""
-    field_descriptor_collection: List[Dict[str, Any]] = bejson_document_payload.get("Fields", [])
-    field_map_lookup_table: Dict[str, int] = {}
-    for column_ordinal_index, field_descriptor_dictionary in enumerate(field_descriptor_collection):
-        field_name_identifier: str = field_descriptor_dictionary.get("name", "")
-        if field_name_identifier:
-            field_map_lookup_table[field_name_identifier] = column_ordinal_index
-    return field_map_lookup_table
+def compile_bejson_field_map(doc_payload: Dict[str, Any]) -> Dict[str, int]:
+    """Compile O(1) field name to column index lookup cache per Policy §6.2."""
+    fields: List[Dict[str, Any]] = doc_payload.get("Fields", [])
+    return {f.get("name", ""): idx for idx, f in enumerate(fields) if f.get("name")}
 
 
-def create_blank_bejson_job_document(
-    job_goal_description: str,
-    job_type_classification: str = "coding",
-    job_subtype_classification: str = "general"
-) -> Dict[str, Any]:
-    """Generate canonical JobMaker BEJSON 104a document structure."""
-    current_calendar_date_string: str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+def load_bejson_file(file_path: Path, default_fields: Optional[List[Dict[str, str]]] = None, schema_name: str = "Schema") -> Dict[str, Any]:
+    """Load a BEJSON 104a file or initialize a fresh template if missing."""
+    if file_path.is_file():
+        try:
+            with open(file_path, "r", encoding="utf-8") as handle:
+                return json.load(handle)
+        except Exception as e:
+            sys.stderr.write(f"Warning: Failed to parse {file_path.name}: {e}\n")
+
     return {
         "Format": "BEJSON",
         "Format_Version": "104a",
         "Format_Creator": "Elton Boehnen",
-        "Schema_Name": "Job Schema",
-        "Schema_Version": "1.0",
-        "Records_Type": ["JobTask"],
-        "Job_Goal": job_goal_description,
-        "Job_Type": job_type_classification,
-        "Job_Subtype": job_subtype_classification,
-        "Contextualize_Plan": True,
-        "Contextualize_Last": True,
-        "Job_Complete": False,
-        "Creation_Date": current_calendar_date_string,
-        "Completion_Date": "",
-        "Fields": CANONICAL_JOB_FIELDS,
-        "Values": []
+        "Schema_Name": schema_name,
+        "Schema_Version": "1.0.0",
+        "Records_Type": [schema_name.replace(" ", "")],
+        "Fields": default_fields or [],
+        "Values": [],
     }
 
 
-def create_blank_markdown_job_document(
-    job_goal_description: str,
-    job_type_classification: str = "general"
-) -> str:
-    """Generate canonical Markdown job brief document."""
-    current_calendar_date_string: str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    return (
-        f"# Job: {job_goal_description}\n\n"
-        f"**Date**: {current_calendar_date_string}\n"
-        f"**Domain**: {job_type_classification}\n"
-        f"**Status**: Pending\n\n"
-        f"## Mission Goal\n"
-        f"{job_goal_description}\n\n"
-        f"## Tasks\n"
-        f"- [ ] Step 1: Initial task analysis and staging.\n"
-        f"- [ ] Step 2: Implementation and validation.\n"
-    )
+def save_bejson_atomic(file_path: Path, doc_payload: Dict[str, Any]) -> None:
+    """Save BEJSON document atomically via temporary swap."""
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = file_path.with_suffix(".tmp")
+    with open(tmp_path, "w", encoding="utf-8") as handle:
+        json.dump(doc_payload, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+    tmp_path.replace(file_path)
 
 
-# ── Job Manager Engine (Loaded Chamber Pattern) ──────────────────────────────
+# ── Job Manager Engine ───────────────────────────────────────────────────────
 class JobManagerEngine:
     """
-    Stateful Job Manager and Deployment Engine implementing the Loaded Chamber Pattern:
-      Phase 1: Discovery (List saved, deployed, completed, templates)
-      Phase 2: Target Lock (Select job into persistent chamber)
-      Phase 3: Execution Actions (View, edit, add-task, deploy, delete)
+    Authoritative Job Manager Engine implementing the Loaded Chamber Pattern
+    persisting job ID and subdirectory ('active', 'saved', 'completed').
     """
 
     def __init__(self) -> None:
-        self.paths_dictionary: Dict[str, Path] = resolve_canonical_environment_paths()
-        self.saved_jobs_directory: Path = self.paths_dictionary["SAVED_JOBS"]
-        self.jobs_folder_path: Path = self.paths_dictionary["JOBS_FOLDER"]
-        self.completed_jobs_folder_path: Path = self.paths_dictionary["COMPLETED_JOBS_FOLDER"]
-        self.templates_folder_path: Path = self.paths_dictionary["JOB_TEMPLATES"]
-        self.state_file_path: Path = LOCAL_STATE_FILE_PATH
-
+        self.paths: Dict[str, Path] = resolve_canonical_paths()
         self.ensure_storage_directories()
 
     def ensure_storage_directories(self) -> None:
-        """Ensure all required local directories exist."""
-        self.saved_jobs_directory.mkdir(parents=True, exist_ok=True)
-        LOCAL_CONFIG_DIRECTORY.mkdir(parents=True, exist_ok=True)
+        """Verify and create directories and initial registries."""
+        for p in (self.paths["JOB_ROOT"], self.paths["JOBS_FOLDER"], self.paths["COMPLETED_JOBS_FOLDER"], self.paths["SAVED_JOBS"], LOCAL_CONFIG_DIRECTORY):
+            p.mkdir(parents=True, exist_ok=True)
 
-    # ── State Store Handling ─────────────────────────────────────────────────
-    def load_state_store(self) -> Dict[str, Any]:
-        """Load persistent shared state."""
-        if not self.state_file_path.exists():
-            return {"active_mode": "jobs", "active_job": None, "active_job_path": None}
+        if not self.paths["ACTIVE_REGISTRY"].exists():
+            save_bejson_atomic(self.paths["ACTIVE_REGISTRY"], load_bejson_file(self.paths["ACTIVE_REGISTRY"], ACTIVE_REGISTRY_FIELDS, "Active Job Registry Schema"))
+
+        if not self.paths["COMPLETED_REGISTRY"].exists():
+            save_bejson_atomic(self.paths["COMPLETED_REGISTRY"], load_bejson_file(self.paths["COMPLETED_REGISTRY"], COMPLETED_REGISTRY_FIELDS, "Completed Job Registry Schema"))
+
+    # ── Chamber State Management ─────────────────────────────────────────────
+    def load_state(self) -> Dict[str, Any]:
+        """Load persistent chamber state."""
+        if not LOCAL_STATE_FILE_PATH.exists():
+            return {"active_mode": "jobs", "active_job": None, "active_job_subdir": None}
         try:
-            with open(self.state_file_path, "r", encoding="utf-8") as state_file_handle:
-                return json.load(state_file_handle)
+            with open(LOCAL_STATE_FILE_PATH, "r", encoding="utf-8") as handle:
+                return json.load(handle)
         except Exception:
-            return {"active_mode": "jobs", "active_job": None, "active_job_path": None}
+            return {"active_mode": "jobs", "active_job": None, "active_job_subdir": None}
 
-    def persist_state_store(self, state_payload_dictionary: Dict[str, Any]) -> None:
-        """Atomically persist state."""
-        self.state_file_path.parent.mkdir(parents=True, exist_ok=True)
-        temporary_state_file_path: Path = self.state_file_path.with_suffix(".tmp")
-        with open(temporary_state_file_path, "w", encoding="utf-8") as temporary_file_handle:
-            json.dump(state_payload_dictionary, temporary_file_handle, indent=2)
-            temporary_file_handle.write("\n")
-        temporary_state_file_path.replace(self.state_file_path)
+    def persist_state(self, state_data: Dict[str, Any]) -> None:
+        """Save persistent chamber state atomically."""
+        LOCAL_CONFIG_DIRECTORY.mkdir(parents=True, exist_ok=True)
+        tmp = LOCAL_STATE_FILE_PATH.with_suffix(".tmp")
+        with open(tmp, "w", encoding="utf-8") as handle:
+            json.dump(state_data, handle, indent=2)
+            handle.write("\n")
+        tmp.replace(LOCAL_STATE_FILE_PATH)
 
-    # ── Loaded Chamber Accessors ─────────────────────────────────────────────
-    def get_loaded_job_identifier(self) -> Optional[str]:
-        """Return the filename or slug of the currently locked chamber job."""
-        state_data: Dict[str, Any] = self.load_state_store()
-        return state_data.get("active_job")
+    def lock_job(self, job_id: str, job_name: str, subdir: str = "active", file_path: str = "") -> None:
+        """Lock job into chamber, persisting active_job, active_job_name, and active_job_subdir."""
+        state = self.load_state()
+        state["active_mode"] = "jobs"
+        state["active_job"] = job_id
+        state["active_job_name"] = job_name
+        state["active_job_subdir"] = subdir
+        state["active_job_path"] = file_path
+        state["updated_at"] = datetime.now(timezone.utc).isoformat()
+        self.persist_state(state)
 
-    def get_loaded_job_path(self) -> Optional[Path]:
-        """Return the resolved Path of the currently locked chamber job if it exists."""
-        job_identifier: Optional[str] = self.get_loaded_job_identifier()
-        if not job_identifier:
-            return None
-        candidate_path: Path = self.saved_jobs_directory / job_identifier
-        if candidate_path.exists():
-            return candidate_path
-        # Search without extension
-        for candidate_file in self.saved_jobs_directory.iterdir():
-            if candidate_file.is_file() and candidate_file.stem.lower() == job_identifier.lower():
-                return candidate_file
-        return None
+    def clear_chamber(self) -> None:
+        """Clear active job and subdir from chamber."""
+        state = self.load_state()
+        state["active_job"] = None
+        state["active_job_name"] = None
+        state["active_job_subdir"] = None
+        state["active_job_path"] = None
+        state["updated_at"] = datetime.now(timezone.utc).isoformat()
+        self.persist_state(state)
 
-    def lock_job_into_chamber(self, job_target_path: Path) -> None:
-        """Lock target job into the persistent chamber."""
-        state_data: Dict[str, Any] = self.load_state_store()
-        current_iso_timestamp: str = datetime.now(timezone.utc).isoformat()
-        state_data["active_mode"] = "jobs"
-        state_data["active_job"] = job_target_path.name
-        state_data["active_job_path"] = str(job_target_path)
-        state_data["active_job_format"] = "bejson" if job_target_path.suffix.lower() == ".bejson" else "markdown"
-        state_data["updated_at"] = current_iso_timestamp
-        self.persist_state_store(state_data)
+    def get_loaded_job_info(self) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+        """Return (active_job_id, active_job_name, active_job_subdir)."""
+        state = self.load_state()
+        return (state.get("active_job"), state.get("active_job_name"), state.get("active_job_subdir"))
 
-    def clear_chamber_lock(self) -> None:
-        """Clear the chamber target lock."""
-        state_data: Dict[str, Any] = self.load_state_store()
-        current_iso_timestamp: str = datetime.now(timezone.utc).isoformat()
-        state_data["active_job"] = None
-        state_data["active_job_path"] = None
-        state_data["active_job_format"] = None
-        state_data["updated_at"] = current_iso_timestamp
-        self.persist_state_store(state_data)
+    # ── Registry CRUD Operations ─────────────────────────────────────────────
+    def get_active_registry(self) -> Dict[str, Any]:
+        return load_bejson_file(self.paths["ACTIVE_REGISTRY"], ACTIVE_REGISTRY_FIELDS, "Active Job Registry Schema")
 
-    # ── Phase 1: Discovery ───────────────────────────────────────────────────
-    def list_saved_jobs(self) -> List[Dict[str, Any]]:
-        """List all saved jobs in data/saved_jobs/."""
-        saved_job_records: List[Dict[str, Any]] = []
-        if not self.saved_jobs_directory.exists():
-            return saved_job_records
+    def get_completed_registry(self) -> Dict[str, Any]:
+        return load_bejson_file(self.paths["COMPLETED_REGISTRY"], COMPLETED_REGISTRY_FIELDS, "Completed Job Registry Schema")
 
-        candidate_files: List[Path] = sorted(
-            [entry for entry in self.saved_jobs_directory.iterdir() if entry.is_file() and entry.suffix.lower() in (".bejson", ".md", ".json")],
-            key=lambda file_path_entry: file_path_entry.stat().st_mtime,
-            reverse=True
-        )
-
-        for ordinal_index, file_path_entry in enumerate(candidate_files, start=1):
-            is_bejson: bool = file_path_entry.suffix.lower() in (".bejson", ".json")
-            task_count_metric: int = 0
-            tasks_completed_metric: int = 0
-            goal_summary_title: str = file_path_entry.stem.replace("_", " ")
-
-            if is_bejson:
-                try:
-                    with open(file_path_entry, "r", encoding="utf-8") as file_handle:
-                        payload: Dict[str, Any] = json.load(file_handle)
-                        goal_summary_title = payload.get("Job_Goal", goal_summary_title)
-                        values_collection: List[List[Any]] = payload.get("Values", [])
-                        field_map: Dict[str, int] = compile_bejson_field_map(payload)
-                        task_completed_index: Optional[int] = field_map.get("task_completed")
-                        task_count_metric = len(values_collection)
-                        if task_completed_index is not None:
-                            for task_row in values_collection:
-                                if len(task_row) > task_completed_index and task_row[task_completed_index] is True:
-                                    tasks_completed_metric += 1
-                except Exception:
-                    pass
-            else:
-                try:
-                    lines_collection: List[str] = file_path_entry.read_text(encoding="utf-8").splitlines()
-                    for line_item in lines_collection:
-                        line_stripped: str = line_item.strip()
-                        if line_stripped.startswith("- [ ]") or line_stripped.startswith("* [ ]"):
-                            task_count_metric += 1
-                        elif line_stripped.startswith("- [x]") or line_stripped.startswith("* [x]"):
-                            task_count_metric += 1
-                            tasks_completed_metric += 1
-                except Exception:
-                    pass
-
-            modification_timestamp_string: str = datetime.fromtimestamp(
-                file_path_entry.stat().st_mtime, tz=timezone.utc
-            ).strftime("%Y-%m-%d %H:%M")
-
-            saved_job_records.append({
-                "index": ordinal_index,
-                "filename": file_path_entry.name,
-                "stem": file_path_entry.stem,
-                "format": "BEJSON" if is_bejson else "Markdown",
-                "title": goal_summary_title,
-                "task_count": task_count_metric,
-                "tasks_completed": tasks_completed_metric,
-                "modified": modification_timestamp_string,
-                "path": file_path_entry
+    def list_active_jobs(self) -> List[Dict[str, Any]]:
+        """Return list of all active/pending/inactive jobs from active registry."""
+        doc = self.get_active_registry()
+        fmap = compile_bejson_field_map(doc)
+        results = []
+        for idx, row in enumerate(doc.get("Values", []), 1):
+            results.append({
+                "index": idx,
+                "job_id": str(row[fmap.get("job_id", 0)]),
+                "job_name": str(row[fmap.get("job_name", 1)]),
+                "priority": str(row[fmap.get("priority", 2)]),
+                "status": str(row[fmap.get("status", 3)]),
+                "creation_date": str(row[fmap.get("creation_date", 4)]),
+                "assigned_actor": str(row[fmap.get("assigned_actor", 5)]),
+                "job_instructions": str(row[fmap.get("job_instructions", 6)]),
+                "job_context_notes": str(row[fmap.get("job_context_notes", 7)]),
+                "task_count": int(row[fmap.get("task_count", 8)] or 0),
+                "tasks_completed": int(row[fmap.get("tasks_completed", 9)] or 0),
+                "tasks_json": str(row[fmap.get("tasks_json", 10)] or "[]"),
+                "job_file_path": str(row[fmap.get("job_file_path", 11)]),
+                "tags": str(row[fmap.get("tags", 12)]),
+                "subdir": "active" if str(row[fmap.get("status", 3)]).lower() == "active" else "saved",
             })
-
-        return saved_job_records
-
-    def list_deployed_jobs(self) -> List[Dict[str, Any]]:
-        """List active jobs currently present in $JOBS_FOLDER."""
-        deployed_job_records: List[Dict[str, Any]] = []
-        if not self.jobs_folder_path.exists():
-            return deployed_job_records
-
-        for entry_file in sorted(self.jobs_folder_path.iterdir()):
-            if entry_file.is_file() and entry_file.name.upper() not in ("AGENTS.MD", "README.MD", ".GITIGNORE"):
-                stat_metadata = entry_file.stat()
-                modification_timestamp_string: str = datetime.fromtimestamp(
-                    stat_metadata.st_mtime, tz=timezone.utc
-                ).strftime("%Y-%m-%d %H:%M")
-                deployed_job_records.append({
-                    "filename": entry_file.name,
-                    "size_bytes": stat_metadata.st_size,
-                    "modified": modification_timestamp_string,
-                    "path": entry_file
-                })
-        return deployed_job_records
+        return results
 
     def list_completed_jobs(self) -> List[Dict[str, Any]]:
-        """List archived jobs in $COMPLETED_JOBS_FOLDER."""
-        completed_records: List[Dict[str, Any]] = []
-        if not self.completed_jobs_folder_path.exists():
-            return completed_records
+        """Return list of all completed jobs from completed registry."""
+        doc = self.get_completed_registry()
+        fmap = compile_bejson_field_map(doc)
+        results = []
+        for idx, row in enumerate(doc.get("Values", []), 1):
+            results.append({
+                "index": idx,
+                "job_id": str(row[fmap.get("job_id", 0)]),
+                "job_name": str(row[fmap.get("job_name", 1)]),
+                "priority": str(row[fmap.get("priority", 2)]),
+                "creation_date": str(row[fmap.get("creation_date", 3)]),
+                "completion_date": str(row[fmap.get("completion_date", 4)]),
+                "duration_seconds": int(row[fmap.get("duration_seconds", 5)] or 0),
+                "completed_by": str(row[fmap.get("completed_by", 6)]),
+                "resolution_summary": str(row[fmap.get("resolution_summary", 7)]),
+                "artifacts_produced": str(row[fmap.get("artifacts_produced", 8)]),
+                "job_instructions": str(row[fmap.get("job_instructions", 9)]),
+                "job_context_notes": str(row[fmap.get("job_context_notes", 10)]),
+                "tasks_json": str(row[fmap.get("tasks_json", 11)] or "[]"),
+                "archive_file_path": str(row[fmap.get("archive_file_path", 12)]),
+                "tags": str(row[fmap.get("tags", 13)]),
+                "subdir": "completed",
+            })
+        return results
 
-        for entry_path in sorted(self.completed_jobs_folder_path.iterdir()):
-            if entry_path.name.upper() not in ("AGENTS.MD", "README.MD", ".GITIGNORE"):
-                completed_records.append({
-                    "name": entry_path.name,
-                    "is_directory": entry_path.is_dir(),
-                    "path": entry_path
-                })
-        return completed_records
+    def list_saved_files(self) -> List[Dict[str, Any]]:
+        """List draft templates or saved jobs in data/saved_jobs/."""
+        results = []
+        if self.paths["SAVED_JOBS"].exists():
+            for idx, entry in enumerate(sorted(self.paths["SAVED_JOBS"].iterdir()), 1):
+                if entry.is_file() and entry.suffix.lower() in (".bejson", ".md", ".json"):
+                    results.append({
+                        "index": idx,
+                        "filename": entry.name,
+                        "path": str(entry),
+                        "size": entry.stat().st_size,
+                        "subdir": "saved",
+                    })
+        return results
 
-    # ── Phase 2: Target Lock Operation ───────────────────────────────────────
-    def select_job_by_query(self, query_identifier: str) -> Optional[Path]:
-        """Find and lock saved job by index ordinal, filename, or partial slug."""
-        available_jobs: List[Dict[str, Any]] = self.list_saved_jobs()
-        if not available_jobs:
-            return None
+    # ── Job Selection & Resolution ───────────────────────────────────────────
+    def select_job(self, query: str) -> Optional[Dict[str, Any]]:
+        """Find job across active, completed, and saved stores, then lock into chamber."""
+        query_clean = query.strip().lower()
 
-        # 1. Try matching numerical index
-        if query_identifier.isdigit():
-            target_index: int = int(query_identifier)
-            for record_item in available_jobs:
-                if record_item["index"] == target_index:
-                    self.lock_job_into_chamber(record_item["path"])
-                    return record_item["path"]
+        # Check Active Registry first
+        active_list = self.list_active_jobs()
+        for item in active_list:
+            if query_clean in (item["job_id"].lower(), item["job_name"].lower(), str(item["index"])):
+                self.lock_job(item["job_id"], item["job_name"], subdir=item["subdir"], file_path=item["job_file_path"])
+                return item
 
-        # 2. Try exact filename match
-        for record_item in available_jobs:
-            if record_item["filename"].lower() == query_identifier.lower():
-                self.lock_job_into_chamber(record_item["path"])
-                return record_item["path"]
+        for item in active_list:
+            if query_clean in item["job_name"].lower() or query_clean in item["job_id"].lower():
+                self.lock_job(item["job_id"], item["job_name"], subdir=item["subdir"], file_path=item["job_file_path"])
+                return item
 
-        # 3. Try exact stem match
-        for record_item in available_jobs:
-            if record_item["stem"].lower() == query_identifier.lower():
-                self.lock_job_into_chamber(record_item["path"])
-                return record_item["path"]
+        # Check Completed Registry
+        completed_list = self.list_completed_jobs()
+        for item in completed_list:
+            if query_clean in (item["job_id"].lower(), item["job_name"].lower(), str(item["index"])):
+                self.lock_job(item["job_id"], item["job_name"], subdir="completed", file_path=item["archive_file_path"])
+                return item
 
-        # 4. Try prefix or substring match
-        for record_item in available_jobs:
-            if query_identifier.lower() in record_item["stem"].lower():
-                self.lock_job_into_chamber(record_item["path"])
-                return record_item["path"]
+        for item in completed_list:
+            if query_clean in item["job_name"].lower():
+                self.lock_job(item["job_id"], item["job_name"], subdir="completed", file_path=item["archive_file_path"])
+                return item
+
+        # Check saved files
+        saved_list = self.list_saved_files()
+        for item in saved_list:
+            if query_clean in (item["filename"].lower(), Path(item["filename"]).stem.lower(), str(item["index"])):
+                self.lock_job(item["filename"], item["filename"], subdir="saved", file_path=item["path"])
+                return item
 
         return None
 
-    # ── Phase 3: Execution Actions ───────────────────────────────────────────
-    def create_new_saved_job(
-        self,
-        job_name_raw: str,
-        job_format_type: str = "bejson",
-        job_goal_text: Optional[str] = None,
-        job_subtype_text: str = "general"
-    ) -> Path:
-        """Create a new job in saved storage."""
-        slugified_file_stem: str = "".join(
-            character_element if character_element.isalnum() or character_element in ("-", "_") else "_"
-            for character_element in job_name_raw.strip()
-        ).strip("_")
+    def get_loaded_job_record(self) -> Optional[Dict[str, Any]]:
+        """Retrieve full dictionary of the currently loaded chamber job."""
+        job_id, _, subdir = self.get_loaded_job_info()
+        if not job_id:
+            return None
 
-        if not slugified_file_stem:
-            slugified_file_stem = f"Job_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
-
-        goal_resolved: str = job_goal_text or job_name_raw.replace("_", " ")
-
-        if job_format_type.lower() == "bejson":
-            file_extension: str = ".bejson"
-            target_job_path: Path = self.saved_jobs_directory / f"{slugified_file_stem}{file_extension}"
-            job_payload_dictionary: Dict[str, Any] = create_blank_bejson_job_document(
-                job_goal_description=goal_resolved,
-                job_type_classification="coding",
-                job_subtype_classification=job_subtype_text
-            )
-            with open(target_job_path, "w", encoding="utf-8") as target_file_handle:
-                json.dump(job_payload_dictionary, target_file_handle, indent=2)
-                target_file_handle.write("\n")
+        if subdir == "completed":
+            for item in self.list_completed_jobs():
+                if item["job_id"] == job_id or item["job_name"] == job_id:
+                    return item
         else:
-            file_extension = ".md"
-            target_job_path = self.saved_jobs_directory / f"{slugified_file_stem}{file_extension}"
-            markdown_content_string: str = create_blank_markdown_job_document(
-                job_goal_description=goal_resolved,
-                job_type_classification=job_subtype_text
-            )
-            target_job_path.write_text(markdown_content_string, encoding="utf-8")
+            for item in self.list_active_jobs():
+                if item["job_id"] == job_id or item["job_name"] == job_id:
+                    return item
 
-        # Auto-lock newly created job into chamber
-        self.lock_job_into_chamber(target_job_path)
-        return target_job_path
+        # Fallback check both
+        for item in self.list_active_jobs() + self.list_completed_jobs():
+            if item["job_id"] == job_id or item["job_name"] == job_id:
+                return item
 
-    def add_task_to_bejson_job(
+        return None
+
+    # ── Job Creation ─────────────────────────────────────────────────────────
+    def create_job(
         self,
-        job_target_path: Path,
-        task_name_title: str,
-        task_description_body: str = "",
-        is_task_mandatory: bool = True,
-        is_audit_enabled: bool = True
-    ) -> bool:
-        """Append a canonical JobTask row to a BEJSON 104a job."""
-        if job_target_path.suffix.lower() not in (".bejson", ".json"):
+        name: str,
+        instructions: str = "",
+        context_notes: str = "",
+        priority: str = "normal",
+        status: str = "active",
+        tasks: Optional[List[str]] = None,
+        tags: str = "",
+    ) -> Dict[str, Any]:
+        """Create new job, record in active registry, and lock into chamber."""
+        current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        timestamp_slug = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        job_id = f"job_{timestamp_slug}"
+
+        task_records: List[Dict[str, Any]] = []
+        if tasks:
+            for idx, t_name in enumerate(tasks, 1):
+                task_records.append({
+                    "task_id": str(uuid.uuid4())[:8],
+                    "task_order": idx,
+                    "task_name": t_name.strip(),
+                    "task_description": "",
+                    "task_completed": False,
+                })
+
+        tasks_json = json.dumps(task_records)
+        target_dir = self.paths["JOBS_FOLDER"] if status.lower() == "active" else self.paths["SAVED_JOBS"]
+        job_file_name = f"{job_id}_{name.replace(' ', '_')[:32]}.bejson"
+        job_file_path = target_dir / job_file_name
+
+        # Create canonical individual job document
+        job_doc = {
+            "Format": "BEJSON",
+            "Format_Version": "104a",
+            "Format_Creator": "Elton Boehnen",
+            "Schema_Name": "Job Document Schema",
+            "Schema_Version": "1.0.0",
+            "Records_Type": ["JobTask"],
+            "Job_Id": job_id,
+            "Job_Name": name,
+            "Job_Instructions": instructions,
+            "Job_Context_Notes": context_notes,
+            "Job_Priority": priority.lower(),
+            "Job_Status": status.lower(),
+            "Creation_Date": current_date,
+            "Job_Complete": False,
+            "Fields": [
+                {"name": "task_id", "type": "string"},
+                {"name": "task_order", "type": "integer"},
+                {"name": "task_name", "type": "string"},
+                {"name": "task_description", "type": "string"},
+                {"name": "task_completed", "type": "boolean"},
+            ],
+            "Values": [[t["task_id"], t["task_order"], t["task_name"], t["task_description"], t["task_completed"]] for t in task_records],
+        }
+        save_bejson_atomic(job_file_path, job_doc)
+
+        # Append to Active Registry
+        doc = self.get_active_registry()
+        doc.get("Values", []).append([
+            job_id,
+            name,
+            priority.lower(),
+            status.lower(),
+            current_date,
+            "Elton Boehnen",
+            instructions,
+            context_notes,
+            len(task_records),
+            0,
+            tasks_json,
+            str(job_file_path),
+            tags,
+        ])
+        save_bejson_atomic(self.paths["ACTIVE_REGISTRY"], doc)
+
+        # Lock into chamber
+        subdir_name = "active" if status.lower() == "active" else "saved"
+        self.lock_job(job_id, name, subdir=subdir_name, file_path=str(job_file_path))
+
+        return {
+            "job_id": job_id,
+            "job_name": name,
+            "priority": priority.lower(),
+            "status": status.lower(),
+            "job_file_path": str(job_file_path),
+            "subdir": subdir_name,
+        }
+
+    # ── Job Status & Priority Mutation ───────────────────────────────────────
+    def set_job_status(self, new_status: str, target_id: Optional[str] = None) -> bool:
+        """Update job status and move between Jobs/ and saved_jobs/ accordingly."""
+        target = target_id or self.get_loaded_job_info()[0]
+        if not target:
             return False
 
-        with open(job_target_path, "r", encoding="utf-8") as file_handle:
-            payload: Dict[str, Any] = json.load(file_handle)
+        doc = self.get_active_registry()
+        fmap = compile_bejson_field_map(doc)
+        id_idx = fmap.get("job_id", 0)
+        status_idx = fmap.get("status", 3)
+        path_idx = fmap.get("job_file_path", 11)
 
-        field_map: Dict[str, int] = compile_bejson_field_map(payload)
-        values_collection: List[List[Any]] = payload.get("Values", [])
-        next_task_order_index: int = len(values_collection) + 1
-        new_task_uuid_identifier: str = str(uuid.uuid4())
+        found = False
+        new_subdir = "active" if new_status.lower() == "active" else "saved"
 
-        # Construct row according to canonical field order
-        task_row_item: List[Any] = [None] * len(payload.get("Fields", []))
-        if "task_id" in field_map:
-            task_row_item[field_map["task_id"]] = new_task_uuid_identifier
-        if "task_order" in field_map:
-            task_row_item[field_map["task_order"]] = next_task_order_index
-        if "task_name" in field_map:
-            task_row_item[field_map["task_name"]] = task_name_title
-        if "task_description" in field_map:
-            task_row_item[field_map["task_description"]] = task_description_body
-        if "task_completed" in field_map:
-            task_row_item[field_map["task_completed"]] = False
-        if "audit_enabled" in field_map:
-            task_row_item[field_map["audit_enabled"]] = is_audit_enabled
-        if "audit_passed" in field_map:
-            task_row_item[field_map["audit_passed"]] = False
-        if "audit_fail_reason" in field_map:
-            task_row_item[field_map["audit_fail_reason"]] = ""
-        if "task_context" in field_map:
-            task_row_item[field_map["task_context"]] = []
-        if "task_reference" in field_map:
-            task_row_item[field_map["task_reference"]] = []
-        if "task_mandatory" in field_map:
-            task_row_item[field_map["task_mandatory"]] = is_task_mandatory
-
-        values_collection.append(task_row_item)
-        payload["Values"] = values_collection
-        payload["Job_Complete"] = False
-
-        with open(job_target_path, "w", encoding="utf-8") as file_handle:
-            json.dump(payload, file_handle, indent=2)
-            file_handle.write("\n")
-        return True
-
-    def toggle_bejson_task_completion(
-        self,
-        job_target_path: Path,
-        task_selector: str
-    ) -> Optional[bool]:
-        """Toggle task_completed status in BEJSON job."""
-        if job_target_path.suffix.lower() not in (".bejson", ".json"):
-            return None
-
-        with open(job_target_path, "r", encoding="utf-8") as file_handle:
-            payload: Dict[str, Any] = json.load(file_handle)
-
-        field_map: Dict[str, int] = compile_bejson_field_map(payload)
-        values_collection: List[List[Any]] = payload.get("Values", [])
-        task_order_idx: Optional[int] = field_map.get("task_order")
-        task_completed_idx: Optional[int] = field_map.get("task_completed")
-        task_id_idx: Optional[int] = field_map.get("task_id")
-
-        if task_completed_idx is None:
-            return None
-
-        updated_state_result: Optional[bool] = None
-        for row in values_collection:
-            matches_order: bool = task_order_idx is not None and str(row[task_order_idx]) == task_selector
-            matches_id: bool = task_id_idx is not None and str(row[task_id_idx]).startswith(task_selector)
-            if matches_order or matches_id:
-                row[task_completed_idx] = not row[task_completed_idx]
-                updated_state_result = row[task_completed_idx]
+        for row in doc.get("Values", []):
+            if str(row[id_idx]).lower() == target.lower():
+                row[status_idx] = new_status.lower()
+                current_path = Path(str(row[path_idx]))
+                if current_path.exists():
+                    target_dir = self.paths["JOBS_FOLDER"] if new_subdir == "active" else self.paths["SAVED_JOBS"]
+                    new_path = target_dir / current_path.name
+                    if current_path.resolve() != new_path.resolve():
+                        shutil.move(current_path, new_path)
+                        row[path_idx] = str(new_path)
+                found = True
+                save_bejson_atomic(self.paths["ACTIVE_REGISTRY"], doc)
+                # Update chamber if this was loaded
+                cur_id, cur_name, _ = self.get_loaded_job_info()
+                if cur_id == target or cur_name == target:
+                    self.lock_job(str(row[id_idx]), str(row[fmap.get("job_name", 1)]), subdir=new_subdir, file_path=str(row[path_idx]))
                 break
 
-        if updated_state_result is not None:
-            # Check if all tasks completed
-            all_done: bool = all(
-                bool(row[task_completed_idx]) for row in values_collection if len(row) > task_completed_idx
-            )
-            payload["Job_Complete"] = all_done
-            if all_done:
-                payload["Completion_Date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-            else:
-                payload["Completion_Date"] = ""
+        return found
 
-            with open(job_target_path, "w", encoding="utf-8") as file_handle:
-                json.dump(payload, file_handle, indent=2)
-                file_handle.write("\n")
-
-        return updated_state_result
-
-    def deploy_job_to_urgent_folder(
-        self,
-        source_job_path: Path,
-        force_overwrite: bool = False
-    ) -> Tuple[bool, str, Optional[Path]]:
-        """
-        Deploy (copy) saved job directly into $JOBS_FOLDER to trigger urgent agent execution.
-        Returns: (success_boolean, status_message_string, destination_file_path)
-        """
-        if not source_job_path.exists():
-            return False, f"Source job file not found: {source_job_path.name}", None
-
-        # Ensure destination directory exists
-        self.jobs_folder_path.mkdir(parents=True, exist_ok=True)
-        destination_target_file_path: Path = self.jobs_folder_path / source_job_path.name
-
-        if destination_target_file_path.exists() and not force_overwrite:
-            return (
-                False,
-                f"Job already exists in urgent queue: {destination_target_file_path.name}. Use --force to overwrite.",
-                destination_target_file_path
-            )
-
-        try:
-            shutil.copy2(source_job_path, destination_target_file_path)
-            return True, f"Deployed successfully to {destination_target_file_path}", destination_target_file_path
-        except Exception as copy_exception_error:
-            return False, f"Deployment failed: {copy_exception_error}", None
-
-    def delete_saved_job(self, job_target_path: Path) -> bool:
-        """Remove a saved job file and clear chamber if it was locked."""
-        if not job_target_path.exists():
+    def set_job_priority(self, new_priority: str, target_id: Optional[str] = None) -> bool:
+        """Update job priority in active registry and document."""
+        target = target_id or self.get_loaded_job_info()[0]
+        if not target:
             return False
-        job_name_string: str = job_target_path.name
-        job_target_path.unlink()
-        if self.get_loaded_job_identifier() == job_name_string:
-            self.clear_chamber_lock()
-        return True
 
+        doc = self.get_active_registry()
+        fmap = compile_bejson_field_map(doc)
+        id_idx = fmap.get("job_id", 0)
+        prio_idx = fmap.get("priority", 2)
 
-# ── Formatting & 57-Column Visual Rendering (Policy §8.1 / §8.4) ─────────────
-def print_chamber_status_banner(engine: JobManagerEngine) -> None:
-    """Render 57-column chamber status banner."""
-    loaded_job_name: Optional[str] = engine.get_loaded_job_identifier()
-    loaded_job_path: Optional[Path] = engine.get_loaded_job_path()
-    deployed_records: List[Dict[str, Any]] = engine.list_deployed_jobs()
-    deployed_count: int = len(deployed_records)
+        for row in doc.get("Values", []):
+            if str(row[id_idx]).lower() == target.lower():
+                row[prio_idx] = new_priority.lower()
+                save_bejson_atomic(self.paths["ACTIVE_REGISTRY"], doc)
+                return True
 
-    print(DIVIDER_57)
-    print(f" {ACCENT}JOB MANAGEMENT SYSTEM [LOADED CHAMBER]{RESET}")
-    print(SUBDIVIDER_57)
-    print(f" {ACCENT}MODE:{RESET}     JOBS             {ACCENT}URGENT QUEUE:{RESET} {deployed_count:<2} active")
+        return False
 
-    if loaded_job_path and loaded_job_path.exists():
-        is_bejson: bool = loaded_job_path.suffix.lower() in (".bejson", ".json")
-        format_display: str = "BEJSON 104a" if is_bejson else "Markdown"
-        print(f" {ACCENT}CHAMBER:{RESET}  [LOCKED]         {ACCENT}FORMAT:{RESET}       {format_display}")
-        print(f" {ACCENT}TARGET:{RESET}   {loaded_job_path.name[:45]}")
+    # ── Task Operations ──────────────────────────────────────────────────────
+    def add_task(self, task_title: str, task_desc: str = "", target_id: Optional[str] = None) -> bool:
+        """Add task to job's tasks_json and increment task_count."""
+        target = target_id or self.get_loaded_job_info()[0]
+        if not target:
+            return False
 
-        if is_bejson:
-            try:
-                with open(loaded_job_path, "r", encoding="utf-8") as file_handle:
-                    payload: Dict[str, Any] = json.load(file_handle)
-                    goal_text: str = payload.get("Job_Goal", "")
-                    values_collection: List[List[Any]] = payload.get("Values", [])
-                    field_map: Dict[str, int] = compile_bejson_field_map(payload)
-                    task_completed_idx: Optional[int] = field_map.get("task_completed")
-                    done_count: int = 0
-                    if task_completed_idx is not None:
-                        for row in values_collection:
-                            if len(row) > task_completed_idx and row[task_completed_idx] is True:
-                                done_count += 1
-                    total_count: int = len(values_collection)
-                    print(f" {ACCENT}GOAL:{RESET}     {goal_text[:45]}")
-                    print(f" {ACCENT}PROGRESS:{RESET} {done_count}/{total_count} tasks completed")
-            except Exception:
-                pass
-        else:
-            file_size_bytes: int = loaded_job_path.stat().st_size
-            print(f" {ACCENT}SIZE:{RESET}     {file_size_bytes} bytes")
-    else:
-        print(f" {ACCENT}CHAMBER:{RESET}  (empty - no job loaded in chamber)")
-        print(f" {DIM}Use --list to view saved jobs and --select-job <id> to lock.{RESET}")
+        doc = self.get_active_registry()
+        fmap = compile_bejson_field_map(doc)
+        id_idx = fmap.get("job_id", 0)
+        tcount_idx = fmap.get("task_count", 8)
+        tjson_idx = fmap.get("tasks_json", 10)
 
-    print(DIVIDER_57)
+        for row in doc.get("Values", []):
+            if str(row[id_idx]).lower() == target.lower():
+                try:
+                    tasks_list = json.loads(str(row[tjson_idx]) or "[]")
+                except Exception:
+                    tasks_list = []
+                new_order = len(tasks_list) + 1
+                tasks_list.append({
+                    "task_id": str(uuid.uuid4())[:8],
+                    "task_order": new_order,
+                    "task_name": task_title.strip(),
+                    "task_description": task_desc.strip(),
+                    "task_completed": False,
+                })
+                row[tjson_idx] = json.dumps(tasks_list)
+                row[tcount_idx] = len(tasks_list)
+                save_bejson_atomic(self.paths["ACTIVE_REGISTRY"], doc)
+                return True
 
+        return False
 
-def print_saved_jobs_table(saved_jobs: List[Dict[str, Any]], active_job_name: Optional[str] = None) -> None:
-    """Render saved jobs in 57-column table."""
-    print(DIVIDER_57)
-    print(f" {ACCENT}{'#':<3} {'FORMAT':<8} {'TASKS':<7} {'NAME'}{RESET}")
-    print(SUBDIVIDER_57)
-    if not saved_jobs:
-        print(f" {DIM}No saved jobs found in data/saved_jobs/{RESET}")
-        print(f" {DIM}Create one with: --new <job_name>{RESET}")
-    else:
-        for job_record in saved_jobs:
-            marker_indicator: str = f"{ACCENT}*{RESET}" if job_record["filename"] == active_job_name else " "
-            idx_str: str = f"{job_record['index']}{marker_indicator}"
-            fmt_str: str = job_record["format"][:8]
-            progress_str: str = f"{job_record['tasks_completed']}/{job_record['task_count']}"
-            name_str: str = job_record["stem"][:34]
-            print(f" {idx_str:<4} {fmt_str:<8} {progress_str:<7} {name_str}")
-    print(DIVIDER_57)
+    def toggle_task(self, order_or_id: str, target_id: Optional[str] = None) -> Optional[bool]:
+        """Toggle task completion state in tasks_json."""
+        target = target_id or self.get_loaded_job_info()[0]
+        if not target:
+            return None
 
+        doc = self.get_active_registry()
+        fmap = compile_bejson_field_map(doc)
+        id_idx = fmap.get("job_id", 0)
+        tdone_idx = fmap.get("tasks_completed", 9)
+        tjson_idx = fmap.get("tasks_json", 10)
 
-def print_deployed_jobs_table(deployed_jobs: List[Dict[str, Any]]) -> None:
-    """Render active urgent queue jobs in 57-column table."""
-    print(DIVIDER_57)
-    print(f" {ACCENT}URGENT JOBS QUEUE ($JOBS_FOLDER){RESET}")
-    print(SUBDIVIDER_57)
-    if not deployed_jobs:
-        print(f" {DIM}Queue is empty. No jobs waiting for urgent execution.{RESET}")
-    else:
-        for deployed_record in deployed_jobs:
-            size_kb: float = deployed_record["size_bytes"] / 1024.0
-            print(f" • {deployed_record['filename'][:36]:<36} {size_kb:>5.1f}KB")
-            print(f"   {DIM}Modified: {deployed_record['modified']}{RESET}")
-    print(DIVIDER_57)
+        for row in doc.get("Values", []):
+            if str(row[id_idx]).lower() == target.lower():
+                try:
+                    tasks_list = json.loads(str(row[tjson_idx]) or "[]")
+                except Exception:
+                    tasks_list = []
 
+                toggled_state: Optional[bool] = None
+                done_count = 0
 
-def print_job_detailed_view(job_path: Path) -> None:
-    """Render comprehensive view of a job document."""
-    if not job_path.exists():
-        print(f"{ACCENT}[✗] Error:{RESET} Job file does not exist: {job_path.name}")
-        return
+                for t in tasks_list:
+                    if str(t.get("task_order")) == str(order_or_id) or str(t.get("task_id")) == str(order_or_id):
+                        t["task_completed"] = not t.get("task_completed", False)
+                        toggled_state = t["task_completed"]
+                    if t.get("task_completed"):
+                        done_count += 1
 
-    is_bejson: bool = job_path.suffix.lower() in (".bejson", ".json")
+                if toggled_state is not None:
+                    row[tjson_idx] = json.dumps(tasks_list)
+                    row[tdone_idx] = done_count
+                    save_bejson_atomic(self.paths["ACTIVE_REGISTRY"], doc)
+                    return toggled_state
 
-    print(DIVIDER_57)
-    print(f" {ACCENT}JOB DETAIL:{RESET} {job_path.name}")
-    print(SUBDIVIDER_57)
+        return None
 
-    if is_bejson:
-        try:
-            with open(job_path, "r", encoding="utf-8") as file_handle:
-                payload: Dict[str, Any] = json.load(file_handle)
+    # ── Mark Complete (Moving it IS marking it complete!) ─────────────────────
+    def complete_job(
+        self,
+        resolution_summary: str = "Job completed successfully.",
+        artifacts: str = "",
+        target_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Mark job complete:
+          - Extract from active registry
+          - Mark all tasks complete
+          - Move file to Completed_Jobs/
+          - Record in completed_jobs_registry.104a.bejson
+          - Update chamber to subdir='completed' or clear
+        """
+        target = target_id or self.get_loaded_job_info()[0]
+        if not target:
+            return None
 
-            print(f" {ACCENT}Goal:{RESET}       {payload.get('Job_Goal', '(none)')}")
-            print(f" {ACCENT}Type:{RESET}       {payload.get('Job_Type', 'coding')} / {payload.get('Job_Subtype', 'general')}")
-            print(f" {ACCENT}Complete:{RESET}   {payload.get('Job_Complete', False)}")
-            print(f" {ACCENT}Created:{RESET}    {payload.get('Creation_Date', '')}")
-            if payload.get("Completion_Date"):
-                print(f" {ACCENT}Finished:{RESET}   {payload.get('Completion_Date')}")
-            print(SUBDIVIDER_57)
-            print(f" {ACCENT}TASKS LIST:{RESET}")
+        active_doc = self.get_active_registry()
+        fmap = compile_bejson_field_map(active_doc)
+        id_idx = fmap.get("job_id", 0)
 
-            field_map: Dict[str, int] = compile_bejson_field_map(payload)
-            values_collection: List[List[Any]] = payload.get("Values", [])
-            order_idx: Optional[int] = field_map.get("task_order")
-            name_idx: Optional[int] = field_map.get("task_name")
-            completed_idx: Optional[int] = field_map.get("task_completed")
-            audit_idx: Optional[int] = field_map.get("audit_enabled")
-            mandatory_idx: Optional[int] = field_map.get("task_mandatory")
+        target_row: Optional[List[Any]] = None
+        remaining_values: List[List[Any]] = []
 
-            if not values_collection:
-                print(f"  {DIM}(no tasks defined - add with --add-task){RESET}")
+        for row in active_doc.get("Values", []):
+            if str(row[id_idx]).lower() == target.lower() and target_row is None:
+                target_row = row
             else:
-                for row in values_collection:
-                    order_val = row[order_idx] if order_idx is not None and len(row) > order_idx else "?"
-                    name_val = row[name_idx] if name_idx is not None and len(row) > name_idx else "(unnamed)"
-                    is_done = row[completed_idx] if completed_idx is not None and len(row) > completed_idx else False
-                    is_mand = row[mandatory_idx] if mandatory_idx is not None and len(row) > mandatory_idx else False
-                    is_aud = row[audit_idx] if audit_idx is not None and len(row) > audit_idx else False
+                remaining_values.append(row)
 
-                    check_mark: str = f"[{ACCENT}✓{RESET}]" if is_done else "[ ]"
-                    flags_tag: str = f"({ 'M' if is_mand else '' }{ 'A' if is_aud else '' })"
-                    print(f"  {check_mark} Step {order_val}: {name_val[:38]} {DIM}{flags_tag}{RESET}")
-        except Exception as parse_error:
-            print(f" {ACCENT}[✗] Failed to parse BEJSON job:{RESET} {parse_error}")
+        if not target_row:
+            return None
+
+        active_doc["Values"] = remaining_values
+        save_bejson_atomic(self.paths["ACTIVE_REGISTRY"], active_doc)
+
+        # Move underlying file to Completed_Jobs/
+        original_path_str = str(target_row[fmap.get("job_file_path", 11)])
+        original_path = Path(original_path_str) if original_path_str else None
+        archive_dest_path = ""
+
+        if original_path and original_path.exists():
+            dest_file = self.paths["COMPLETED_JOBS_FOLDER"] / original_path.name
+            shutil.move(original_path, dest_file)
+            archive_dest_path = str(dest_file)
+
+        # Complete tasks in tasks_json
+        try:
+            tasks_list = json.loads(str(target_row[fmap.get("tasks_json", 10)]) or "[]")
+            for t in tasks_list:
+                t["task_completed"] = True
+            updated_tasks_json = json.dumps(tasks_list)
+        except Exception:
+            updated_tasks_json = str(target_row[fmap.get("tasks_json", 10)])
+
+        completion_date = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+        # Record into Completed Registry
+        completed_doc = self.get_completed_registry()
+        completed_doc.get("Values", []).append([
+            str(target_row[fmap.get("job_id", 0)]),
+            str(target_row[fmap.get("job_name", 1)]),
+            str(target_row[fmap.get("priority", 2)]),
+            str(target_row[fmap.get("creation_date", 4)]),
+            completion_date,
+            0,
+            "Elton Boehnen",
+            resolution_summary,
+            artifacts,
+            str(target_row[fmap.get("job_instructions", 6)]),
+            str(target_row[fmap.get("job_context_notes", 7)]),
+            updated_tasks_json,
+            archive_dest_path,
+            str(target_row[fmap.get("tags", 12)]),
+        ])
+        save_bejson_atomic(self.paths["COMPLETED_REGISTRY"], completed_doc)
+
+        # Persist completed state in chamber
+        self.lock_job(str(target_row[fmap.get("job_id", 0)]), str(target_row[fmap.get("job_name", 1)]), subdir="completed", file_path=archive_dest_path)
+
+        return {
+            "job_id": str(target_row[fmap.get("job_id", 0)]),
+            "job_name": str(target_row[fmap.get("job_name", 1)]),
+            "completion_date": completion_date,
+            "resolution_summary": resolution_summary,
+            "archive_path": archive_dest_path,
+        }
+
+    # ── Search & Legacy Migration ────────────────────────────────────────────
+    def query_jobs(self, term: str) -> Dict[str, List[Dict[str, Any]]]:
+        """Search term across active and completed job registries."""
+        term_clean = term.lower()
+        active_matches = [
+            j for j in self.list_active_jobs()
+            if term_clean in j["job_name"].lower() or term_clean in j["job_instructions"].lower() or term_clean in j["job_context_notes"].lower() or term_clean in j["tags"].lower()
+        ]
+        completed_matches = [
+            j for j in self.list_completed_jobs()
+            if term_clean in j["job_name"].lower() or term_clean in j["resolution_summary"].lower() or term_clean in j["job_instructions"].lower()
+        ]
+        return {"active": active_matches, "completed": completed_matches}
+
+    def migrate_legacy_completed_jobs(self) -> int:
+        """Scan loose files in Completed_Jobs/ and register them in completed_jobs_registry."""
+        completed_doc = self.get_completed_registry()
+        fmap = compile_bejson_field_map(completed_doc)
+        existing_names = {str(row[fmap.get("job_name", 1)]) for row in completed_doc.get("Values", [])}
+
+        migrated_count = 0
+        comp_folder = self.paths["COMPLETED_JOBS_FOLDER"]
+
+        for entry in sorted(comp_folder.iterdir()):
+            if entry.name == "completed_jobs_registry.104a.bejson" or entry.name.startswith("."):
+                continue
+
+            job_title = entry.stem if entry.is_file() else entry.name
+            if job_title in existing_names:
+                continue
+
+            content_text = ""
+            if entry.is_file():
+                try:
+                    content_text = entry.read_text(encoding="utf-8")
+                except Exception:
+                    pass
+
+            c_date = datetime.fromtimestamp(entry.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            synthetic_id = f"job_legacy_{len(completed_doc.get('Values', [])) + 1:03d}"
+
+            completed_doc.get("Values", []).append([
+                synthetic_id,
+                job_title,
+                "normal",
+                c_date,
+                c_date,
+                0,
+                "Elton Boehnen",
+                f"Historical job migrated from {entry.name}",
+                "",
+                content_text[:500],
+                "",
+                "[]",
+                str(entry),
+                "legacy,migrated",
+            ])
+            migrated_count += 1
+
+        if migrated_count > 0:
+            save_bejson_atomic(self.paths["COMPLETED_REGISTRY"], completed_doc)
+
+        return migrated_count
+
+
+# ── Terminal Display Formatting (Policy §8.1 Tri-Color) ───────────────────────
+def print_status_banner(engine: JobManagerEngine) -> None:
+    """Print high-density 57-column chamber status banner."""
+    job_id, job_name, subdir = engine.get_loaded_job_info()
+    loaded_record = engine.get_loaded_job_record()
+
+    print(DIVIDER_57)
+    print(f" {ACCENT}JOB MANAGEMENT CHAMBER [BEJSON 104a]{RESET}")
+    print(SUBDIVIDER_57)
+    if not job_id:
+        print(f" {ACCENT}LOCKED JOB:{RESET}  (none - chamber empty)")
+        print(f" {ACCENT}SUBDIR:{RESET}      (none)")
+        print(f" {DIM}Use --list to view jobs, --select <id> to lock chamber.{RESET}")
     else:
-        text_content: str = job_path.read_text(encoding="utf-8")
-        for text_line in text_content.splitlines()[:30]:
-            print(f"  {text_line[:54]}")
-        if len(text_content.splitlines()) > 30:
-            print(f"  {DIM}... (truncated for display){RESET}")
+        status_str = loaded_record.get("status", "").upper() if loaded_record else ""
+        prio_str = loaded_record.get("priority", "").upper() if loaded_record else ""
+        display_title = (job_name or job_id)[:36]
+
+        print(f" {ACCENT}LOCKED JOB:{RESET}  {display_title}")
+        print(f" {ACCENT}ID:{RESET}          {job_id}")
+        print(f" {ACCENT}SUBDIR:{RESET}      [{subdir or 'active'}]")
+        if status_str:
+            print(f" {ACCENT}STATUS:{RESET}      [{status_str}]  {ACCENT}PRIORITY:{RESET} [{prio_str}]")
+        if loaded_record and loaded_record.get("task_count"):
+            print(f" {ACCENT}PROGRESS:{RESET}    {loaded_record.get('tasks_completed', 0)}/{loaded_record.get('task_count', 0)} tasks complete")
 
     print(DIVIDER_57)
 
 
-# ── Command-Line Parser Configuration ─────────────────────────────────────────
+def print_active_jobs_table(jobs: List[Dict[str, Any]], active_job_id: Optional[str] = None) -> None:
+    """Print 57-column table of active registry jobs."""
+    print(DIVIDER_57)
+    print(f" {ACCENT}ACTIVE JOBS REGISTRY (job_registry.104a.bejson){RESET}")
+    print(SUBDIVIDER_57)
+    if not jobs:
+        print(f" {DIM}No active jobs in registry.{RESET}")
+        print(f" {DIM}Create one with: --new -n <name> -i <instructions>{RESET}")
+    else:
+        print(f" {ACCENT}{'#':<3} {'STATUS':<9} {'PRIO':<7} {'TASKS':<7} {'NAME'}{RESET}")
+        print(SUBDIVIDER_57)
+        for j in jobs:
+            is_locked = (j["job_id"] == active_job_id or j["job_name"] == active_job_id)
+            marker = f"{ACCENT}*{RESET}" if is_locked else " "
+            idx_label = f"{j['index']}{marker}"
+            stat_label = f"[{j['status'][:7]}]"
+            prio_label = j["priority"][:6]
+            progress = f"{j['tasks_completed']}/{j['task_count']}"
+            name_label = j["job_name"][:26]
+            print(f" {idx_label:<4} {stat_label:<9} {prio_label:<7} {progress:<7} {name_label}")
+    print(DIVIDER_57)
+
+
+def print_completed_jobs_table(jobs: List[Dict[str, Any]]) -> None:
+    """Print 57-column table of completed registry jobs."""
+    print(DIVIDER_57)
+    print(f" {ACCENT}COMPLETED JOBS REGISTRY{RESET}")
+    print(SUBDIVIDER_57)
+    if not jobs:
+        print(f" {DIM}No completed jobs registered yet.{RESET}")
+        print(f" {DIM}Mark complete via: --complete-job -m \"summary\"{RESET}")
+    else:
+        print(f" {ACCENT}{'#':<3} {'DATE':<10} {'NAME':<24} {'SUMMARY'}{RESET}")
+        print(SUBDIVIDER_57)
+        for j in jobs:
+            idx_str = f"{j['index']:<3}"
+            date_str = j["completion_date"][:10]
+            name_str = j["job_name"][:23]
+            summ_str = j["resolution_summary"][:16]
+            print(f" {idx_str} {date_str:<10} {name_str:<24} {summ_str}")
+    print(DIVIDER_57)
+
+
+def print_job_card(record: Dict[str, Any]) -> None:
+    """Render full 57-column job card."""
+    print(DIVIDER_57)
+    print(f" {ACCENT}JOB:{RESET} {record.get('job_name', '(unnamed)')}")
+    print(SUBDIVIDER_57)
+    print(f" {ACCENT}ID:{RESET}           {record.get('job_id')}")
+    print(f" {ACCENT}Subdirectory:{RESET} [{record.get('subdir', 'active')}]")
+    if record.get("status"):
+        print(f" {ACCENT}Status:{RESET}       {record.get('status').upper()}")
+    if record.get("priority"):
+        print(f" {ACCENT}Priority:{RESET}     {record.get('priority').upper()}")
+    print(f" {ACCENT}Created:{RESET}      {record.get('creation_date')}")
+    if record.get("completion_date"):
+        print(f" {ACCENT}Completed:{RESET}    {record.get('completion_date')}")
+    if record.get("resolution_summary"):
+        print(f" {ACCENT}Resolution:{RESET}   {record.get('resolution_summary')}")
+
+    if record.get("job_instructions"):
+        print(SUBDIVIDER_57)
+        print(f" {ACCENT}INSTRUCTIONS:{RESET}")
+        for line in record["job_instructions"].splitlines()[:15]:
+            print(f"  {line[:53]}")
+
+    if record.get("job_context_notes"):
+        print(SUBDIVIDER_57)
+        print(f" {ACCENT}CONTEXT NOTES:{RESET}")
+        for line in record["job_context_notes"].splitlines()[:10]:
+            print(f"  {line[:53]}")
+
+    try:
+        tasks = json.loads(record.get("tasks_json", "[]"))
+        if tasks:
+            print(SUBDIVIDER_57)
+            print(f" {ACCENT}TASKS ({record.get('tasks_completed', 0)}/{len(tasks)} complete):{RESET}")
+            for t in tasks:
+                chk = f"[{ACCENT}✓{RESET}]" if t.get("task_completed") else "[ ]"
+                ord_n = t.get("task_order", "?")
+                t_title = t.get("task_name", "(unnamed)")[:42]
+                print(f"  {chk} Step {ord_n}: {t_title}")
+    except Exception:
+        pass
+
+    print(DIVIDER_57)
+
+
+# ── CLI Parser ───────────────────────────────────────────────────────────────
 def build_argument_parser() -> argparse.ArgumentParser:
     """Construct CLI argument parser for Job Manager."""
     parser = argparse.ArgumentParser(
         prog="job_tool.py",
-        description="Stateful Job Manager & Urgent Deployment Engine (Mode 5, Loaded Chamber Pattern).",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        description="Authoritative BEJSON 104a Job Manager & Registry CLI (Mode 4).",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    # Phase 1: Discovery
-    parser.add_argument("--list-saved", "--list", "-l", action="store_true", help="List all saved job files in storage")
-    parser.add_argument("--list-deployed", "--deployed", action="store_true", help="List active jobs in urgent queue")
-    parser.add_argument("--list-completed", "--completed", action="store_true", help="List archived completed jobs")
-    parser.add_argument("--status", action="store_true", help="Display 57-column chamber status banner")
+    # Discovery
+    disc_grp = parser.add_argument_group("Phase 1: Discovery")
+    disc_grp.add_argument("--list", "--list-jobs", "--list-active", "-l", action="store_true", help="List active & queued jobs in registry")
+    disc_grp.add_argument("--list-completed", action="store_true", help="List archived completed jobs in registry")
+    disc_grp.add_argument("--list-saved", action="store_true", help="List draft/saved job files")
+    disc_grp.add_argument("--status", action="store_true", help="Display 57-column chamber status banner")
+    disc_grp.add_argument("--query", "-q", metavar="TERM", help="Search across active and completed job registries")
 
-    # Phase 2: Target Lock
-    parser.add_argument("--select-job", "-s", metavar="TARGET", help="Lock job into chamber by index, name, or slug")
-    parser.add_argument("--clear-job", action="store_true", help="Clear currently locked job from chamber")
-    parser.add_argument("--show-chamber", action="store_true", help="Display details of loaded chamber job")
+    # Chamber Lock
+    lock_grp = parser.add_argument_group("Phase 2: Target Lock (Loaded Chamber)")
+    lock_grp.add_argument("--select", "--select-job", "-s", metavar="TARGET", help="Lock job into chamber by index, name, or ID")
+    lock_grp.add_argument("--clear", "--clear-job", action="store_true", help="Clear chamber target lock")
 
-    # Phase 3: Execution Actions
-    parser.add_argument("--new", "--create-job", metavar="NAME", help="Create a new saved job document")
-    parser.add_argument("--type", choices=["bejson", "md"], default="bejson", help="Job document format (default: bejson)")
-    parser.add_argument("--goal", metavar="GOAL", help="Mission goal for the new job")
-    parser.add_argument("--subtype", default="general", help="Subtype domain classification")
+    # Chamber Actions
+    act_grp = parser.add_argument_group("Phase 3: Execution Actions on Loaded Chamber")
+    act_grp.add_argument("--view", "--view-job", action="store_true", help="View full card of loaded job (or specify target)")
+    act_grp.add_argument("--set-priority", "-p", choices=["urgent", "high", "normal", "low"], help="Set priority of loaded job")
+    act_grp.add_argument("--set-status", choices=["active", "inactive", "pending", "paused"], help="Set status of loaded job")
+    act_grp.add_argument("--activate", action="store_true", help="Activate job (ensures in active registry & Jobs/)")
+    act_grp.add_argument("--deactivate", action="store_true", help="Deactivate job (marks inactive in saved_jobs/)")
+    act_grp.add_argument("--add-task", metavar="TITLE", help="Append new task to loaded job")
+    act_grp.add_argument("--task-desc", default="", help="Description for new task")
+    act_grp.add_argument("--toggle-task", metavar="ORDER", help="Toggle completion of task by step order or ID")
+    act_grp.add_argument("--complete-job", "--mark-complete", action="store_true", help="Mark job complete: archive to Completed_Jobs & update completed registry")
+    act_grp.add_argument("-m", "--summary", default="Completed successfully.", help="Resolution summary for completed job")
+    act_grp.add_argument("--artifacts", default="", help="Artifacts produced by completed job")
 
-    parser.add_argument("--view", action="store_true", help="View full details and task list of loaded job")
-    parser.add_argument("--add-task", metavar="TITLE", help="Append a new task to loaded BEJSON job")
-    parser.add_argument("--task-desc", default="", help="Detailed description for the new task")
-    parser.add_argument("--non-mandatory", action="store_true", help="Mark new task as non-mandatory")
-    parser.add_argument("--no-audit", action="store_true", help="Disable audit requirement on new task")
-
-    parser.add_argument("--toggle-task", metavar="ORDER", help="Toggle completion of task by step order")
-    parser.add_argument("--deploy", action="store_true", help="Deploy loaded saved job to urgent queue ($JOBS_FOLDER)")
-    parser.add_argument("--force", action="store_true", help="Force overwrite when deploying or deleting")
-    parser.add_argument("--delete", action="store_true", help="Delete loaded saved job from storage")
-    parser.add_argument("--pull-deployed", metavar="FILE", help="Pull a job from urgent queue into saved jobs")
+    # Creation & Ingestion
+    creat_grp = parser.add_argument_group("Phase 4: Creation & Ingestion")
+    creat_grp.add_argument("--new", "--create-job", action="store_true", help="Create a new job in registry")
+    creat_grp.add_argument("-n", "--name", metavar="NAME", help="Name/title for the new job")
+    creat_grp.add_argument("-i", "--instructions", metavar="TEXT", help="Detailed actionable instructions for the job")
+    creat_grp.add_argument("--notes", metavar="TEXT", help="Context notes (paths, references, requirements)")
+    creat_grp.add_argument("--priority", choices=["urgent", "high", "normal", "low"], default="normal", help="Job priority (default: normal)")
+    creat_grp.add_argument("--status-val", dest="new_status", choices=["active", "inactive", "pending"], default="active", help="Initial job status (default: active)")
+    creat_grp.add_argument("--tasks", metavar="T1,T2...", help="Comma-separated initial tasks list")
+    creat_grp.add_argument("--tags", default="", help="Comma-separated search tags")
+    creat_grp.add_argument("--migrate-legacy", action="store_true", help="Scan loose completed jobs and index into completed registry")
 
     return parser
 
@@ -758,188 +928,192 @@ def main() -> int:
     """Execute Job Manager CLI routine."""
     engine = JobManagerEngine()
     parser = build_argument_parser()
-    parsed_arguments = parser.parse_args()
+    args = parser.parse_args()
 
-    # Default to status if no arguments provided
+    # Default to status if no arguments
     if len(sys.argv) == 1:
-        print_chamber_status_banner(engine)
+        print_status_banner(engine)
         print()
         parser.print_help()
         return 0
 
-    # Phase 1: Discovery Commands
-    if parsed_arguments.status:
-        print_chamber_status_banner(engine)
+    # 1. Status & Discovery
+    if args.status:
+        print_status_banner(engine)
         return 0
 
-    if parsed_arguments.list_saved:
-        saved_items = engine.list_saved_jobs()
-        active_target_name = engine.get_loaded_job_identifier()
-        print_saved_jobs_table(saved_items, active_target_name)
+    if args.list:
+        jobs = engine.list_active_jobs()
+        cur_id, cur_name, _ = engine.get_loaded_job_info()
+        print_active_jobs_table(jobs, cur_id or cur_name)
         return 0
 
-    if parsed_arguments.list_deployed:
-        deployed_items = engine.list_deployed_jobs()
-        print_deployed_jobs_table(deployed_items)
+    if args.list_completed:
+        jobs = engine.list_completed_jobs()
+        print_completed_jobs_table(jobs)
         return 0
 
-    if parsed_arguments.list_completed:
-        completed_items = engine.list_completed_jobs()
+    if args.list_saved:
+        files = engine.list_saved_files()
         print(DIVIDER_57)
-        print(f" {ACCENT}COMPLETED JOBS ARCHIVE ($COMPLETED_JOBS_FOLDER){RESET}")
+        print(f" {ACCENT}SAVED DRAFT JOBS & TEMPLATES{RESET}")
         print(SUBDIVIDER_57)
-        if not completed_items:
-            print(f" {DIM}No archived completed jobs found.{RESET}")
+        if not files:
+            print(f" {DIM}No draft job files in data/saved_jobs/{RESET}")
         else:
-            for item in completed_items:
-                dir_marker = "/" if item["is_directory"] else ""
-                print(f" • {item['name']}{dir_marker}")
+            for f in files:
+                print(f" {f['index']:<3} {f['filename']} ({f['size']} bytes)")
         print(DIVIDER_57)
         return 0
 
-    # Phase 2: Target Lock Commands
-    if parsed_arguments.select_job:
-        target_query: str = parsed_arguments.select_job.strip()
-        matched_job_path: Optional[Path] = engine.select_job_by_query(target_query)
-        if matched_job_path:
-            print(f"{ACCENT}[✓] Chamber Locked:{RESET} {matched_job_path.name}")
-            print_chamber_status_banner(engine)
+    if args.query:
+        res = engine.query_jobs(args.query)
+        print(DIVIDER_57)
+        print(f" {ACCENT}JOB QUERY RESULTS:{RESET} '{args.query}'")
+        print(SUBDIVIDER_57)
+        print(f" {BOLD}Active Matches ({len(res['active'])}):{RESET}")
+        for j in res["active"]:
+            print(f"  • [{j['priority'].upper()}] {j['job_name']} ({j['job_id']})")
+        print(f" {BOLD}Completed Matches ({len(res['completed'])}):{RESET}")
+        for j in res["completed"]:
+            print(f"  • {j['job_name']} - {j['resolution_summary'][:30]} ({j['completion_date'][:10]})")
+        print(DIVIDER_57)
+        return 0
+
+    # 2. Chamber Selection & Clearing
+    if args.select:
+        match = engine.select_job(args.select)
+        if match:
+            print(f"{ACCENT}[✓] Chamber Locked:{RESET} {match.get('job_name', match.get('filename'))}")
+            print_status_banner(engine)
             return 0
         else:
-            print(f"{ACCENT}[✗] Error:{RESET} No saved job matched query '{target_query}'.", file=sys.stderr)
+            print(f"{ACCENT}[✗] Error:{RESET} No job matched query '{args.select}'.", file=sys.stderr)
             return 1
 
-    if parsed_arguments.clear_job:
-        engine.clear_chamber_lock()
+    if args.clear:
+        engine.clear_chamber()
         print(f"{ACCENT}[✓] Chamber target cleared.{RESET}")
         return 0
 
-    if parsed_arguments.show_chamber:
-        loaded_path = engine.get_loaded_job_path()
-        if not loaded_path:
-            print(f"{ACCENT}[!] Warning:{RESET} Chamber is empty. No job currently locked.")
+    # 3. Creation
+    if args.new:
+        if not args.name:
+            print(f"{ACCENT}[✗] Error:{RESET} Flag -n/--name is required to create a new job.", file=sys.stderr)
             return 1
-        print_job_detailed_view(loaded_path)
-        return 0
 
-    # Phase 3: Execution Actions
-    if parsed_arguments.new:
-        new_name_raw: str = parsed_arguments.new
-        created_path = engine.create_new_saved_job(
-            job_name_raw=new_name_raw,
-            job_format_type=parsed_arguments.type,
-            job_goal_text=parsed_arguments.goal,
-            job_subtype_text=parsed_arguments.subtype
+        t_list = [t.strip() for t in args.tasks.split(",") if t.strip()] if args.tasks else []
+        created = engine.create_job(
+            name=args.name,
+            instructions=args.instructions or "",
+            context_notes=args.notes or "",
+            priority=args.priority or "normal",
+            status=args.new_status or "active",
+            tasks=t_list,
+            tags=args.tags or "",
         )
-        print(f"{ACCENT}[✓] Created and locked into chamber:{RESET} {created_path.name}")
-        print_job_detailed_view(created_path)
+        print(f"{ACCENT}[✓] Created and locked into chamber:{RESET} {created['job_name']} ({created['job_id']})")
+        loaded = engine.get_loaded_job_record()
+        if loaded:
+            print_job_card(loaded)
         return 0
 
-    if parsed_arguments.view:
-        loaded_path = engine.get_loaded_job_path()
-        if not loaded_path:
-            print(f"{ACCENT}[✗] Error:{RESET} No job loaded in chamber. Use --select-job <id> first.", file=sys.stderr)
+    # 4. View Loaded Job
+    if args.view:
+        rec = engine.get_loaded_job_record()
+        if not rec:
+            print(f"{ACCENT}[✗] Error:{RESET} No job loaded in chamber. Use --select <id> first.", file=sys.stderr)
             return 1
-        print_job_detailed_view(loaded_path)
+        print_job_card(rec)
         return 0
 
-    if parsed_arguments.add_task:
-        loaded_path = engine.get_loaded_job_path()
-        if not loaded_path:
-            print(f"{ACCENT}[✗] Error:{RESET} No job loaded in chamber. Use --select-job <id> first.", file=sys.stderr)
-            return 1
-        success = engine.add_task_to_bejson_job(
-            job_target_path=loaded_path,
-            task_name_title=parsed_arguments.add_task,
-            task_description_body=parsed_arguments.task_desc,
-            is_task_mandatory=not parsed_arguments.non_mandatory,
-            is_audit_enabled=not parsed_arguments.no_audit
-        )
+    # 5. Status & Priority Mutation
+    if args.set_status:
+        success = engine.set_job_status(args.set_status)
         if success:
-            print(f"{ACCENT}[✓] Task added successfully:{RESET} {parsed_arguments.add_task}")
-            print_job_detailed_view(loaded_path)
+            print(f"{ACCENT}[✓] Job status updated to:{RESET} [{args.set_status.upper()}]")
+            print_status_banner(engine)
             return 0
-        else:
-            print(f"{ACCENT}[✗] Error:{RESET} Failed to add task (ensure target is a BEJSON job).", file=sys.stderr)
-            return 1
+        print(f"{ACCENT}[✗] Error:{RESET} Could not update status. Check loaded chamber.", file=sys.stderr)
+        return 1
 
-    if parsed_arguments.toggle_task:
-        loaded_path = engine.get_loaded_job_path()
-        if not loaded_path:
-            print(f"{ACCENT}[✗] Error:{RESET} No job loaded in chamber. Use --select-job <id> first.", file=sys.stderr)
-            return 1
-        result = engine.toggle_bejson_task_completion(loaded_path, parsed_arguments.toggle_task)
-        if result is not None:
-            status_text = "Completed" if result else "Pending"
-            print(f"{ACCENT}[✓] Task status toggled to:{RESET} [{status_text}]")
-            print_job_detailed_view(loaded_path)
+    if args.activate:
+        success = engine.set_job_status("active")
+        if success:
+            print(f"{ACCENT}[✓] Job activated and moved to active queue!{RESET}")
+            print_status_banner(engine)
             return 0
-        else:
-            print(f"{ACCENT}[✗] Error:{RESET} Could not find or toggle task '{parsed_arguments.toggle_task}'.", file=sys.stderr)
-            return 1
+        print(f"{ACCENT}[✗] Error:{RESET} Could not activate job. Check loaded chamber.", file=sys.stderr)
+        return 1
 
-    if parsed_arguments.deploy:
-        loaded_path = engine.get_loaded_job_path()
-        if not loaded_path:
-            print(f"{ACCENT}[✗] Error:{RESET} No job loaded in chamber to deploy. Use --select-job <id> first.", file=sys.stderr)
-            return 1
+    if args.deactivate:
+        success = engine.set_job_status("inactive")
+        if success:
+            print(f"{ACCENT}[✓] Job deactivated and moved to saved drafts.{RESET}")
+            print_status_banner(engine)
+            return 0
+        print(f"{ACCENT}[✗] Error:{RESET} Could not deactivate job. Check loaded chamber.", file=sys.stderr)
+        return 1
 
-        success, message, dest_path = engine.deploy_job_to_urgent_folder(
-            source_job_path=loaded_path,
-            force_overwrite=parsed_arguments.force
+    if args.set_priority:
+        success = engine.set_job_priority(args.set_priority)
+        if success:
+            print(f"{ACCENT}[✓] Job priority updated to:{RESET} [{args.set_priority.upper()}]")
+            print_status_banner(engine)
+            return 0
+        print(f"{ACCENT}[✗] Error:{RESET} Could not update priority. Check loaded chamber.", file=sys.stderr)
+        return 1
+
+    # 6. Task Management
+    if args.add_task:
+        success = engine.add_task(args.add_task, args.task_desc)
+        if success:
+            print(f"{ACCENT}[✓] Task added successfully:{RESET} {args.add_task}")
+            rec = engine.get_loaded_job_record()
+            if rec:
+                print_job_card(rec)
+            return 0
+        print(f"{ACCENT}[✗] Error:{RESET} Failed to add task. Check loaded chamber.", file=sys.stderr)
+        return 1
+
+    if args.toggle_task:
+        state = engine.toggle_task(args.toggle_task)
+        if state is not None:
+            status_text = "Completed" if state else "Pending"
+            print(f"{ACCENT}[✓] Task toggled to:{RESET} [{status_text}]")
+            rec = engine.get_loaded_job_record()
+            if rec:
+                print_job_card(rec)
+            return 0
+        print(f"{ACCENT}[✗] Error:{RESET} Task '{args.toggle_task}' not found in loaded job.", file=sys.stderr)
+        return 1
+
+    # 7. Complete Job (Moving it IS marking it complete!)
+    if args.complete_job:
+        res = engine.complete_job(
+            resolution_summary=args.summary,
+            artifacts=args.artifacts,
         )
-
-        if success and dest_path:
+        if res:
             print(DIVIDER_57)
-            print(f" {ACCENT}URGENT JOB DEPLOYMENT CONFIRMATION{RESET}")
+            print(f" {ACCENT}[✓] JOB COMPLETED & ARCHIVED{RESET}")
             print(SUBDIVIDER_57)
-            print(f" {ACCENT}SOURCE:{RESET}      {loaded_path.name}")
-            print(f" {ACCENT}DESTINATION:{RESET} {dest_path}")
-            print(f" {ACCENT}SIZE:{RESET}        {dest_path.stat().st_size} bytes")
-            print(f" {ACCENT}TIMESTAMP:{RESET}   {datetime.now(timezone.utc).isoformat()}")
+            print(f" {ACCENT}JOB:{RESET}        {res['job_name']} ({res['job_id']})")
+            print(f" {ACCENT}COMPLETED:{RESET}  {res['completion_date']}")
+            print(f" {ACCENT}RESOLUTION:{RESET} {res['resolution_summary']}")
+            if res.get("archive_path"):
+                print(f" {ACCENT}ARCHIVED TO:{RESET} {res['archive_path']}")
             print(SUBDIVIDER_57)
-            print(f" {ACCENT}[✓] STATUS: DEPLOYED TO URGENT QUEUE!{RESET}")
-            print(f" {DIM}Next session startup scan will pick up this job.{RESET}")
+            print(f" {DIM}Moved from active to completed_jobs_registry.104a.bejson.{RESET}")
             print(DIVIDER_57)
             return 0
-        else:
-            print(f"{ACCENT}[✗] Deployment failed:{RESET} {message}", file=sys.stderr)
-            return 1
+        print(f"{ACCENT}[✗] Error:{RESET} Could not complete job. Check loaded chamber.", file=sys.stderr)
+        return 1
 
-    if parsed_arguments.delete:
-        loaded_path = engine.get_loaded_job_path()
-        if not loaded_path:
-            print(f"{ACCENT}[✗] Error:{RESET} No job loaded in chamber. Use --select-job <id> first.", file=sys.stderr)
-            return 1
-
-        if not parsed_arguments.force:
-            print(f"{ACCENT}[!] Confirm Deletion:{RESET} Pass --force to permanently delete '{loaded_path.name}'.")
-            return 1
-
-        target_name_str = loaded_path.name
-        engine.delete_saved_job(loaded_path)
-        print(f"{ACCENT}[✓] Deleted job:{RESET} {target_name_str}")
-        return 0
-
-    if parsed_arguments.pull_deployed:
-        candidate_filename = parsed_arguments.pull_deployed
-        source_in_deployed = engine.jobs_folder_path / candidate_filename
-        source_in_completed = engine.completed_jobs_folder_path / candidate_filename
-        target_source: Optional[Path] = None
-
-        if source_in_deployed.exists():
-            target_source = source_in_deployed
-        elif source_in_completed.exists():
-            target_source = source_in_completed
-
-        if not target_source or not target_source.is_file():
-            print(f"{ACCENT}[✗] Error:{RESET} File not found in deployed or completed folders: {candidate_filename}", file=sys.stderr)
-            return 1
-
-        destination_saved_path = engine.saved_jobs_directory / candidate_filename
-        shutil.copy2(target_source, destination_saved_path)
-        engine.lock_job_into_chamber(destination_saved_path)
-        print(f"{ACCENT}[✓] Pulled into saved jobs and locked:{RESET} {candidate_filename}")
+    # 8. Legacy Migration
+    if args.migrate_legacy:
+        migrated = engine.migrate_legacy_completed_jobs()
+        print(f"{ACCENT}[✓] Migrated {migrated} legacy files into completed_jobs_registry.104a.bejson.{RESET}")
         return 0
 
     return 0
