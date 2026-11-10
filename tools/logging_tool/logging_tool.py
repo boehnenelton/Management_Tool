@@ -36,10 +36,11 @@ def get_script_path() -> Path:
     return Path(__file__).resolve().parent
 
 SCRIPT_PATH: Path = get_script_path()
-LOCAL_LIB_DIRECTORY: Path = SCRIPT_PATH / "lib"
-LOCAL_CONFIG_DIRECTORY: Path = SCRIPT_PATH / "config"
-LOCAL_DATA_DIRECTORY: Path = SCRIPT_PATH / "data"
-LOCAL_EXPORTS_DIRECTORY: Path = SCRIPT_PATH / "exports"
+SUITE_ROOT: Path = SCRIPT_PATH.parent.parent if SCRIPT_PATH.parent.name == "tools" else SCRIPT_PATH
+LOCAL_LIB_DIRECTORY: Path = SUITE_ROOT / "lib"
+LOCAL_CONFIG_DIRECTORY: Path = SUITE_ROOT / "config"
+LOCAL_DATA_DIRECTORY: Path = SUITE_ROOT / "data"
+LOCAL_EXPORTS_DIRECTORY: Path = SUITE_ROOT / "exports"
 
 if str(LOCAL_LIB_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(LOCAL_LIB_DIRECTORY))

@@ -85,18 +85,18 @@ The **Management Tool Suite** provides a single deterministic entry router that 
 
 ## Operational Modes
 
-### Mode 1: Logging Tool (`logging_tool.py`)
+### Mode 1: Logging Tool (`tools/logging_tool/logging_tool.py`)
 - **Persistence**: Daily UTC date partitions backed by standardized records and dual-path encrypted secure sinks.
 - **Context Machine**: Locks session metadata (`subsystem`, `category`, `actor`, `session_id`) into persistent state once, emitting subsequent logs with zero argument friction.
 - **HTML & Markdown Reporting**: Serializes log streams into templated Markdown and compiles standalone responsive HTML reports via `lib_md_to_html.py`.
 - **Integrity Gates**: Structural validation, SHA-256 hash chaining, checksum verification, and automatic daily rotation.
 
-### Mode 2: Research Reports Indexer (`report_indexer.py`)
+### Mode 2: Research Reports Indexer (`tools/report_indexer/report_indexer.py`)
 - **Persistence**: Central index table (`data/reports_index.bejson`) backed by tabular record schemas.
 - **Workflow**: Catalog, categorize, import, pull, view, and search technical specifications, audit papers, and research documents.
 - **Chamber Locking**: Lock an active entry or category into chamber context to execute operations like viewing, editing, or pulling without repeating identifiers.
 
-### Mode 3: Categorized Notes Manager (`notes_tool.py`)
+### Mode 3: Categorized Notes Manager (`tools/notes_tool/notes_tool.py`)
 - **Persistence**: Multi-File Database (MFDB v1.31) with central manifest coordinating entity tables (`category.bejson`, `note.bejson`) linked by parent hierarchy.
 - **Context Machine**: Lock active category and active note persistently in configuration state. Operations execute directly on loaded note targets.
 - **Strict Markdown Header Standard**: Exported and imported notes adhere to literal metadata headers:
@@ -111,9 +111,9 @@ The **Management Tool Suite** provides a single deterministic entry router that 
   - Layout: `notes/<category>/<note-slug>/index.html` + raw `<note-slug>.md`
   - Navigation: Clean wiki-style 2-column link grid of categories on main hub; category headers strictly use `Notes - <Category>`.
   - Accessible Assets: Full `sitemap.html`, `sitemap.xml`, and `robots.txt`.
-- **Interactive Web Editor Workspace (`notes_web_server.py`)**: Localhost workspace running on port 5050 with dual-pane real-time markdown editor, live preview, and chamber state synchronization.
+- **Interactive Web Editor Workspace (`tools/notes_tool/notes_web_server.py`)**: Localhost workspace running on port 5050 with dual-pane real-time markdown editor, live preview, and chamber state synchronization.
 
-### Mode 4: Stateful Job Chamber & Standing Maintenance (`job_tool.py`)
+### Mode 4: Stateful Job Chamber & Standing Maintenance (`tools/job_manager/job_tool.py`)
 - **Active Job Registry**: Tracks active jobs in `data/job_registry.104a.bejson` with sequential tasks, priority classifications, and instructions.
 - **Completed Archive**: Atomically archives completed jobs into `data/completed_jobs_registry.104a.bejson` with resolution summaries and execution timestamps.
 - **Standing Maintenance Jobs Registry (`data/maintenance_jobs_registry.104a.bejson`)**:
@@ -261,12 +261,6 @@ Management_Tool/
 ├── management_tool.py        # Master Router Entry Point (Modes 1-6)
 ├── management.sh             # Master Shell Launcher Wrapper
 ├── __main__.py               # Package Invocation Entry Point
-├── logging_tool.py           # Mode 1: Structured Logging Engine
-├── report_indexer.py         # Mode 2: Research Reports Indexer
-├── notes_tool.py             # Mode 3: Categorized Notes MFDB Manager
-├── notes.sh                  # Mode 3 Shell Launcher
-├── notes_web_server.py       # Mode 3: Localhost Flask Notes Web Editor (port 5050)
-├── job_tool.py               # Mode 4: Stateful Job Chamber & Maintenance Manager
 ├── bejson_project.json       # Project Metadata & Identity Descriptor
 ├── .gitignore                # Runtime State, Log & Temp File Exclusions
 ├── assets/
@@ -279,10 +273,22 @@ Management_Tool/
 │   └── saved_jobs/           # Saved Job Documents & Workflow Templates
 ├── dev/
 │   └── flask_notes_editor_plan.md # Subsystem Architecture Specification
-└── lib/
-    ├── lib_log_report_generator.py # Markdown & HTML Report Generator
-    ├── lib_md_to_html.py           # Standalone Markdown-to-HTML Parser
-    ├── templates/                  # High-Contrast Dark HTML Templates
+├── lib/
+│   ├── lib_log_report_generator.py # Markdown & HTML Report Generator
+│   ├── lib_md_to_html.py           # Standalone Markdown-to-HTML Parser
+│   └── templates/                  # High-Contrast Dark HTML Templates
+└── tools/
+    ├── job_manager/          # Mode 4: Stateful Job Chamber & Maintenance Manager
+    │   ├── job_tool.py
+    │   └── job_manager.py
+    ├── logging_tool/         # Mode 1: Structured Logging Engine
+    │   └── logging_tool.py
+    ├── notes_tool/           # Mode 3: Categorized Notes MFDB Manager & Web Server
+    │   ├── notes_tool.py
+    │   ├── notes_web_server.py
+    │   └── notes.sh
+    └── report_indexer/       # Mode 2: Research Reports Indexer
+        └── report_indexer.py
     ├── notes_mfdb_engine.py        # Notes MFDB Engine & Context Machine
     ├── notes_site_exporter.py      # Static Documentation Site Generator
     ├── lib_bejson_Core_*           # BEJSON Core Primitives & Field Map Engine

@@ -39,9 +39,10 @@ def get_script_path() -> Path:
     return Path(__file__).resolve().parent
 
 SCRIPT_PATH: Path = get_script_path()
-LOCAL_LIB_DIRECTORY: Path = SCRIPT_PATH / "lib"
-LOCAL_CONFIG_DIRECTORY: Path = SCRIPT_PATH / "config"
-LOCAL_DATA_DIRECTORY: Path = SCRIPT_PATH / "data"
+SUITE_ROOT: Path = SCRIPT_PATH.parent.parent if SCRIPT_PATH.parent.name == "tools" else SCRIPT_PATH
+LOCAL_LIB_DIRECTORY: Path = SUITE_ROOT / "lib"
+LOCAL_CONFIG_DIRECTORY: Path = SUITE_ROOT / "config"
+LOCAL_DATA_DIRECTORY: Path = SUITE_ROOT / "data"
 LOCAL_SAVED_JOBS_DIRECTORY: Path = LOCAL_DATA_DIRECTORY / "saved_jobs"
 LOCAL_STATE_FILE_PATH: Path = LOCAL_CONFIG_DIRECTORY / "state.json"
 LOCAL_CONFIG_FILE_PATH: Path = LOCAL_CONFIG_DIRECTORY / "config.json"

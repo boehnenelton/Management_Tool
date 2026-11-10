@@ -18,10 +18,11 @@ from typing import Any, Dict, List, Optional
 SCRIPT_DIR: Path = Path(__file__).resolve().parent
 LIB_DIR: Path = SCRIPT_DIR / "lib"
 CONFIG_DIR: Path = SCRIPT_DIR / "config"
-LOGGING_TOOL_PATH: Path = SCRIPT_DIR / "logging_tool.py"
-REPORT_INDEXER_PATH: Path = SCRIPT_DIR / "report_indexer.py"
-NOTES_TOOL_PATH: Path = SCRIPT_DIR / "notes_tool.py"
-JOB_TOOL_PATH: Path = SCRIPT_DIR / "job_tool.py"
+TOOLS_DIR: Path = SCRIPT_DIR / "tools"
+LOGGING_TOOL_PATH: Path = TOOLS_DIR / "logging_tool" / "logging_tool.py"
+REPORT_INDEXER_PATH: Path = TOOLS_DIR / "report_indexer" / "report_indexer.py"
+NOTES_TOOL_PATH: Path = TOOLS_DIR / "notes_tool" / "notes_tool.py"
+JOB_TOOL_PATH: Path = TOOLS_DIR / "job_manager" / "job_tool.py"
 REMINDER_TOOL_PATH: Path = Path("/storage/emulated/0/Admin/System/tools/reminder_tool/reminder_tool.py")
 TAXONOMY_CARTOGRAPHER_PATH: Path = Path("/storage/emulated/0/Admin/Dev/Tools/Taxonomy_Cartographer/taxonomy_cartographer.py")
 STATE_FILE_PATH: Path = CONFIG_DIR / "state.json"

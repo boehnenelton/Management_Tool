@@ -16,7 +16,8 @@ from pathlib import Path
 
 # Add lib/ to Python path
 CURRENT_SCRIPT_DIR: Path = Path(__file__).resolve().parent
-LIB_DIR: Path = CURRENT_SCRIPT_DIR / "lib"
+SUITE_ROOT: Path = CURRENT_SCRIPT_DIR.parent.parent if CURRENT_SCRIPT_DIR.parent.name == "tools" else CURRENT_SCRIPT_DIR
+LIB_DIR: Path = SUITE_ROOT / "lib"
 if str(LIB_DIR) not in sys.path:
     sys.path.insert(0, str(LIB_DIR))
 
