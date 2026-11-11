@@ -12,7 +12,7 @@ Purpose     : Command-line interface and management engine for BEJSON 105 Standa
 Version     : 1.2.0
 Author      : Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
 Date        : 2026-10-31
-RELATIONAL_ID : bb348f5c-4862-4e96-b2ea-f57092c2c14d
+RELATIONAL_ID : b1f72944-934d-4a11-b4ef-cf24785b8390
 """
 from __future__ import annotations
 
@@ -50,10 +50,11 @@ import lib_bejson_Standards_registry as standards_registry
 import lib_bejson_Standards_validator as standards_validator
 import lib_bejson_Standards_export as standards_export
 import lib_bejson_Standards_errors as standards_errors
+import lib_bejson_Standards_core as standards_core
 from lib_bejson_Core_bejson_core import bejson_core_load_file, bejson_core_get_field_map
 from lib_log_report_generator import generate_log_markdown_report, export_log_html_report
 
-TOOL_VERSION: str = "1.3.0"
+TOOL_VERSION: str = "1.3.1"
 TOOL_AUTHOR: str = "Elton Boehnen"
 TOOL_CONTACT: str = "boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton"
 
@@ -111,6 +112,9 @@ def load_tool_configuration() -> Dict[str, Any]:
     configuration_file_path: Path = LOCAL_CONFIG_DIRECTORY / "config.json"
     fallback_configuration_map: Dict[str, Any] = {
         "global_logs_directory": "/storage/emulated/0/Admin/System/Global_Logs",
+        "default_bejson_dir": "/storage/emulated/0/Admin/System/Global_Logs/bejson",
+        "default_md_dir": "/storage/emulated/0/Admin/System/Global_Logs/md",
+        "default_html_dir": "/storage/emulated/0/Admin/System/Global_Logs/html",
         "default_archive_dir": "/storage/emulated/0/Admin/System/Global_Logs/archives",
         "default_secure_dir": "/storage/emulated/0/Admin/System/Global_Logs/secure",
         "default_subsystem": "system",
@@ -149,10 +153,12 @@ def resolve_target_log_paths(
     target_date_string: Optional[str] = None,
 ) -> Tuple[str, str, str]:
     global_logs_directory: str = configuration_map.get("global_logs_directory", "/storage/emulated/0/Admin/System/Global_Logs")
+    default_bejson_directory: str = configuration_map.get("default_bejson_dir", os.path.join(global_logs_directory, "bejson"))
     default_archive_directory: str = configuration_map.get("default_archive_dir", os.path.join(global_logs_directory, "archives"))
     default_secure_directory: str = configuration_map.get("default_secure_dir", os.path.join(global_logs_directory, "secure"))
 
     os.makedirs(global_logs_directory, exist_ok=True)
+    os.makedirs(default_bejson_directory, exist_ok=True)
     os.makedirs(default_archive_directory, exist_ok=True)
     os.makedirs(default_secure_directory, exist_ok=True)
 
@@ -163,7 +169,12 @@ def resolve_target_log_paths(
         return resolved_main_path, resolved_secure_path, default_archive_directory
 
     active_date_token: str = target_date_string or get_current_utc_date_string()
-    resolved_main_log_file: str = os.path.join(global_logs_directory, f"Log-{active_date_token}.bejson")
+    resolved_main_log_file: str = os.path.join(default_bejson_directory, f"Log-{active_date_token}.bejson")
+    if not os.path.isfile(resolved_main_log_file):
+        legacy_path: str = os.path.join(global_logs_directory, f"Log-{active_date_token}.bejson")
+        if os.path.isfile(legacy_path):
+            resolved_main_log_file = legacy_path
+
     resolved_secure_log_file: str = os.path.join(default_secure_directory, f"Log-{active_date_token}-secure.bejson")
 
     return resolved_main_log_file, resolved_secure_log_file, default_archive_directory
@@ -183,6 +194,40 @@ def ensure_sink_configured(
         archive_dir=target_archive_dir_path,
         archive_period=str(configuration_map.get("default_archive_period", "daily")),
     )
+
+
+def auto_compile_log_reports(log_file_path: str, configuration_map: Dict[str, Any]) -> Tuple[str, str]:
+    """Compile Markdown (.md) and HTML (.html) counterparts in format-based sibling folders alongside the log file via MD_To_HTML."""
+    log_file_path = os.path.abspath(log_file_path)
+    if not os.path.isfile(log_file_path):
+        return "", ""
+    doc = standards_core.bejson_standards_core_load(log_file_path)
+    if not doc:
+        return "", ""
+    rows = list(standards_core.bejson_standards_core_rows_to_dicts(doc))
+    stem = Path(log_file_path).stem
+    date_token = stem.replace("Log-", "").replace("-secure", "")
+
+    global_logs_directory: str = configuration_map.get("global_logs_directory", "/storage/emulated/0/Admin/System/Global_Logs")
+    default_md_directory: str = configuration_map.get("default_md_dir", os.path.join(global_logs_directory, "md"))
+    default_html_directory: str = configuration_map.get("default_html_dir", os.path.join(global_logs_directory, "html"))
+    os.makedirs(default_md_directory, exist_ok=True)
+    os.makedirs(default_html_directory, exist_ok=True)
+
+    md_target = os.path.join(default_md_directory, f"{stem}.md")
+    html_target = os.path.join(default_html_directory, f"{stem}.html")
+
+    export_log_html_report(
+        rows=rows,
+        output_path=html_target,
+        md_output_path=md_target,
+        title=f"Daily System Log Audit Report — {date_token}",
+        theme="dark",
+        filter_summary=f"Daily Log Partition ({date_token})",
+        log_path=log_file_path,
+        config_dict=configuration_map,
+    )
+    return md_target, html_target
 
 
 # ── Action Handlers ────────────────────────────────────────────────────────
@@ -238,6 +283,11 @@ def handle_write_command(parsed_arguments: argparse.Namespace, configuration_map
     if logged_successfully:
         destination_label: str = resolved_secure_path if parsed_arguments.secure else resolved_main_path
         sys.stdout.write(f"[{accent_color}✓{reset_color}] Committed log entry to: {destination_label}\n")
+        # Automatically compile Markdown & HTML counterparts per Log Document Synchronization Invariant
+        try:
+            auto_compile_log_reports(resolved_main_path, configuration_map)
+        except Exception as compile_exc:
+            tool_logger.warning("Could not auto-compile log report: %s", compile_exc)
         return 0
     else:
         sys.stdout.write(f"[{accent_color}✗{reset_color}] Log entry dropped (filtered by level or schema violation).\n")
@@ -254,10 +304,14 @@ def handle_read_command(parsed_arguments: argparse.Namespace, configuration_map:
     target_files_to_read: List[Tuple[str, str, str]] = []
     if parsed_arguments.all:
         global_logs_directory: str = configuration_map.get("global_logs_directory", "/storage/emulated/0/Admin/System/Global_Logs")
-        discovered_log_paths = sorted(glob.glob(os.path.join(global_logs_directory, "Log-*.bejson")))
+        bejson_directory: str = configuration_map.get("default_bejson_dir", os.path.join(global_logs_directory, "bejson"))
+        discovered_log_paths = sorted(glob.glob(os.path.join(bejson_directory, "Log-*.bejson")))
+        for root_p in sorted(glob.glob(os.path.join(global_logs_directory, "Log-*.bejson"))):
+            if root_p not in discovered_log_paths:
+                discovered_log_paths.append(root_p)
         for discovered_path in discovered_log_paths:
-            date_stem = Path(discovered_path).stem.replace("Log-", "")
-            target_files_to_read.append(resolve_target_log_paths(configuration_map, target_date_string=date_stem))
+            date_stem = Path(discovered_path).stem.replace("Log-", "").replace("-secure", "")
+            target_files_to_read.append(resolve_target_log_paths(configuration_map, explicit_log_file=discovered_path, target_date_string=date_stem))
     else:
         target_files_to_read.append((resolved_main_path, resolved_secure_path, resolved_archive_dir))
 
@@ -382,6 +436,29 @@ def handle_export_command(parsed_arguments: argparse.Namespace, configuration_ma
 
 
 def handle_report_command(parsed_arguments: argparse.Namespace, configuration_map: Dict[str, Any]) -> int:
+    accent_color: str = get_tui_accent_color()
+    reset_color: str = get_tui_reset_color()
+
+    if getattr(parsed_arguments, "all", False):
+        global_logs_directory: str = configuration_map.get("global_logs_directory", "/storage/emulated/0/Admin/System/Global_Logs")
+        bejson_directory: str = configuration_map.get("default_bejson_dir", os.path.join(global_logs_directory, "bejson"))
+        discovered_paths = sorted(glob.glob(os.path.join(bejson_directory, "Log-*.bejson")))
+        for root_file in sorted(glob.glob(os.path.join(global_logs_directory, "Log-*.bejson"))):
+            if root_file not in discovered_paths:
+                discovered_paths.append(root_file)
+        if not discovered_paths:
+            sys.stdout.write(f"[{accent_color}!{reset_color}] No log files discovered in {bejson_directory} or {global_logs_directory}\n")
+            return 0
+        sys.stdout.write(f"{TUI_DIVIDER_57}\n")
+        sys.stdout.write(f" {accent_color}BATCH COMPILED LOG REPORTS [md2html]{reset_color}\n")
+        sys.stdout.write(f"{TUI_SUBDIVIDER_57}\n")
+        for log_p in discovered_paths:
+            md_p, html_p = auto_compile_log_reports(log_p, configuration_map)
+            stem = os.path.basename(log_p)
+            sys.stdout.write(f" {accent_color}✓{reset_color} {stem:<24} → md/ & html/\n")
+        sys.stdout.write(f"{TUI_DIVIDER_57}\n")
+        return 0
+
     resolved_main_path, resolved_secure_path, resolved_archive_dir = resolve_target_log_paths(
         configuration_map,
         explicit_log_file=getattr(parsed_arguments, "log_file", None),
@@ -392,30 +469,47 @@ def handle_report_command(parsed_arguments: argparse.Namespace, configuration_ma
         tool_logger.error("Target log file does not exist: %s", target_path)
         return 1
 
-    ensure_sink_configured(resolved_main_path, resolved_secure_path, resolved_archive_dir, configuration_map)
+    doc = standards_core.bejson_standards_core_load(target_path)
+    if not doc:
+        tool_logger.error("Failed to load log file: %s", target_path)
+        return 1
 
-    matching_rows = standards_registry.bejson_standards_read_logs(
-        log_path=target_path,
+    all_rows = list(standards_core.bejson_standards_core_rows_to_dicts(doc))
+    matching_rows = list(standards_export.bejson_standards_export_filter_rows(
+        all_rows,
         min_level=getattr(parsed_arguments, "min_level", None),
         subsystem=getattr(parsed_arguments, "subsystem", None),
-        limit=getattr(parsed_arguments, "limit", 100) or 100,
         category=getattr(parsed_arguments, "category", None),
         actor=getattr(parsed_arguments, "actor", None),
         flag=getattr(parsed_arguments, "flag", None),
         max_priority=getattr(parsed_arguments, "max_priority", None),
-        secure=getattr(parsed_arguments, "secure", False),
         session=getattr(parsed_arguments, "session", None),
         event_key=getattr(parsed_arguments, "key", None),
         since=getattr(parsed_arguments, "since", None),
         until=getattr(parsed_arguments, "until", None),
-    )
+        include_secure_rows=getattr(parsed_arguments, "secure", False),
+    ))
+
+    limit_val = getattr(parsed_arguments, "limit", None)
+    if limit_val and len(matching_rows) > limit_val:
+        matching_rows = matching_rows[-limit_val:]
+
+    stem = Path(target_path).stem
+    stem_date = stem.replace("Log-", "").replace("-secure", "")
+    global_logs_directory = configuration_map.get("global_logs_directory", "/storage/emulated/0/Admin/System/Global_Logs")
+    default_md_directory = configuration_map.get("default_md_dir", os.path.join(global_logs_directory, "md"))
+    default_html_directory = configuration_map.get("default_html_dir", os.path.join(global_logs_directory, "html"))
 
     resolved_html_out = getattr(parsed_arguments, "out", None)
-    if resolved_html_out and not os.path.isabs(resolved_html_out):
+    if not resolved_html_out:
+        resolved_html_out = os.path.join(default_html_directory, f"{stem}.html")
+    elif not os.path.isabs(resolved_html_out):
         resolved_html_out = str(LOCAL_EXPORTS_DIRECTORY / "log_reports" / resolved_html_out)
 
     resolved_md_out = getattr(parsed_arguments, "md_out", None)
-    if resolved_md_out and not os.path.isabs(resolved_md_out):
+    if not resolved_md_out:
+        resolved_md_out = os.path.join(default_md_directory, f"{stem}.md")
+    elif not os.path.isabs(resolved_md_out):
         resolved_md_out = str(LOCAL_EXPORTS_DIRECTORY / "log_reports" / resolved_md_out)
 
     filter_tokens = []
@@ -427,7 +521,7 @@ def handle_report_command(parsed_arguments: argparse.Namespace, configuration_ma
         filter_tokens.append(f"category={parsed_arguments.category}")
     filter_summary = ", ".join(filter_tokens) if filter_tokens else "none (full sink)"
 
-    custom_title = getattr(parsed_arguments, "title", None)
+    custom_title = getattr(parsed_arguments, "title", None) or f"Daily System Log Audit Report — {stem_date}"
     theme = getattr(parsed_arguments, "theme", "dark") or "dark"
 
     report_result = export_log_html_report(
@@ -440,9 +534,6 @@ def handle_report_command(parsed_arguments: argparse.Namespace, configuration_ma
         log_path=target_path,
         config_dict=configuration_map,
     )
-
-    accent_color: str = get_tui_accent_color()
-    reset_color: str = get_tui_reset_color()
 
     sys.stdout.write(f"{TUI_DIVIDER_57}\n")
     sys.stdout.write(f" {accent_color}SYSTEM LOG REPORT COMPILED [md2html]{reset_color}\n")
@@ -459,10 +550,14 @@ def handle_report_command(parsed_arguments: argparse.Namespace, configuration_ma
 
 def handle_audit_command(parsed_arguments: argparse.Namespace, configuration_map: Dict[str, Any]) -> int:
     global_logs_directory: str = configuration_map.get("global_logs_directory", "/storage/emulated/0/Admin/System/Global_Logs")
+    bejson_directory: str = configuration_map.get("default_bejson_dir", os.path.join(global_logs_directory, "bejson"))
     files_to_audit: List[str] = []
 
     if parsed_arguments.all:
-        files_to_audit.extend(sorted(glob.glob(os.path.join(global_logs_directory, "Log-*.bejson"))))
+        files_to_audit.extend(sorted(glob.glob(os.path.join(bejson_directory, "Log-*.bejson"))))
+        for root_f in sorted(glob.glob(os.path.join(global_logs_directory, "Log-*.bejson"))):
+            if root_f not in files_to_audit:
+                files_to_audit.append(root_f)
         files_to_audit.extend(sorted(glob.glob(os.path.join(global_logs_directory, "secure", "Log-*.bejson"))))
         files_to_audit.extend(sorted(glob.glob(os.path.join(global_logs_directory, "archives", "*.bejson"))))
     else:
@@ -510,10 +605,15 @@ def handle_audit_command(parsed_arguments: argparse.Namespace, configuration_map
 def handle_list_command(parsed_arguments: argparse.Namespace, configuration_map: Dict[str, Any]) -> int:
     clear_terminal_screen()
     global_logs_directory: str = configuration_map.get("global_logs_directory", "/storage/emulated/0/Admin/System/Global_Logs")
+    bejson_directory: str = configuration_map.get("default_bejson_dir", os.path.join(global_logs_directory, "bejson"))
+    default_md_directory: str = configuration_map.get("default_md_dir", os.path.join(global_logs_directory, "md"))
+    default_html_directory: str = configuration_map.get("default_html_dir", os.path.join(global_logs_directory, "html"))
     default_secure_directory: str = configuration_map.get("default_secure_dir", os.path.join(global_logs_directory, "secure"))
     default_archive_directory: str = configuration_map.get("default_archive_dir", os.path.join(global_logs_directory, "archives"))
 
-    main_log_files = sorted(glob.glob(os.path.join(global_logs_directory, "Log-*.bejson")))
+    main_log_files = sorted(glob.glob(os.path.join(bejson_directory, "Log-*.bejson")))
+    if not main_log_files:
+        main_log_files = sorted(glob.glob(os.path.join(global_logs_directory, "Log-*.bejson")))
 
     accent_color: str = get_tui_accent_color()
     reset_color: str = get_tui_reset_color()
@@ -522,7 +622,7 @@ def handle_list_command(parsed_arguments: argparse.Namespace, configuration_map:
     sys.stdout.write(f"{TUI_DIVIDER_57}\n")
     sys.stdout.write(f" {accent_color}GLOBAL LOGS CATALOG [57-COL]{reset_color}      ~/.../Global_Logs\n")
     sys.stdout.write(f"{TUI_SUBDIVIDER_57}\n")
-    sys.stdout.write(f" {accent_color}{'FILENAME':<24} {'ROWS':<6} {'SIZE':<8} {'SEC':<5} {'ARCH'}{reset_color}\n")
+    sys.stdout.write(f" {accent_color}{'FILENAME':<22} {'ROWS':<5} {'SIZE':<6} {'MD':<3} {'HTM':<4} {'SEC'}{reset_color}\n")
     sys.stdout.write(f"{TUI_SUBDIVIDER_57}\n")
 
     if not main_log_files:
@@ -543,11 +643,14 @@ def handle_list_command(parsed_arguments: argparse.Namespace, configuration_map:
             secure_companion_path: str = os.path.join(default_secure_directory, f"Log-{date_token}-secure.bejson")
             has_secure_pair: str = "Yes" if os.path.isfile(secure_companion_path) else "No"
 
-            archive_slice_glob = glob.glob(os.path.join(default_archive_directory, f"Log-{date_token}*.bejson"))
-            has_archives: str = "Yes" if archive_slice_glob else "No"
+            md_companion_path: str = os.path.join(default_md_directory, f"Log-{date_token}.md")
+            has_md: str = "Yes" if os.path.isfile(md_companion_path) else "No"
+
+            html_companion_path: str = os.path.join(default_html_directory, f"Log-{date_token}.html")
+            has_html: str = "Yes" if os.path.isfile(html_companion_path) else "No"
 
             sys.stdout.write(
-                f" {file_name_label:<24} {row_count_display:<6} {f'{file_size_kb}KB':<8} {has_secure_pair:<5} {has_archives}\n"
+                f" {file_name_label:<22} {row_count_display:<5} {f'{file_size_kb}K':<6} {has_md:<3} {has_html:<4} {has_secure_pair}\n"
             )
 
     sys.stdout.write(f"{TUI_DIVIDER_57}\n")
@@ -663,6 +766,7 @@ def build_cli_argument_parser() -> argparse.ArgumentParser:
     report_subparser.add_argument("--secure", action="store_true", help="Report from secure log sink.")
     report_subparser.add_argument("-d", "--date", help="Target specific daily log date (YYYY-MM-DD).")
     report_subparser.add_argument("--log-file", help="Path to source log file.")
+    report_subparser.add_argument("--all", action="store_true", help="Compile MD & HTML reports for all daily log files.")
 
     # Subcommand: list
     subcommand_parsers.add_parser("list", help="Catalog and list all daily log files in Global_Logs.")

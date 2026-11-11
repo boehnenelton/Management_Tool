@@ -123,7 +123,7 @@ The **Management Tool Suite** provides a single deterministic entry router that 
   - Execution runs are recorded via `--record-maintenance <id> [--maintenance-result <summary>]`, updating `run_count`, `last_run_timestamp`, and `last_result`.
 - **Loaded Chamber Workflow**: Lock active job into chamber (`--select <id>`), inspect task cards (`--view`), toggle task states (`--toggle-task <idx>`), and add tasks (`--add-task <text>`).
 
-### Mode 5: Launch Reminders & Active Tasks (`reminder_tool.py`)
+### Mode 5: Launch Reminders & Active Tasks (`tools/reminder_tool/reminder_tool.py`)
 - **Dual Registries**:
   - Active Queue: `data/reminders.104a.bejson`
   - Completed Archive: `data/completed_reminders.104a.bejson`
@@ -287,6 +287,10 @@ Management_Tool/
     │   ├── notes_tool.py
     │   ├── notes_web_server.py
     │   └── notes.sh
+    ├── reminder_tool/        # Mode 5: Launch Reminders & Active Tasks Engine
+    │   ├── reminder_tool.py
+    │   ├── remind.sh
+    │   └── data/
     └── report_indexer/       # Mode 2: Research Reports Indexer
         └── report_indexer.py
     ├── notes_mfdb_engine.py        # Notes MFDB Engine & Context Machine
