@@ -1,8 +1,8 @@
 #!/data/data/com.termux/files/usr/bin/env python3
 """
 # Name:           management_tool.py
-# Description:    Unified System Management Tool & Entry Router for Logging, Reports, Notes, Taxonomy & Jobs
-# Version:        152
+# Description:    Unified System Management Tool & Entry Router for Logging, Reports, Notes, Taxonomy, Jobs & Blogger
+# Version:        153
 # Author:         Elton Boehnen · boehnenelton2024@gmail.com · boehnenelton2024.pages.dev · github.com/boehnenelton
 # License:        PolyForm-Noncommercial-1.0.0
 """
@@ -25,6 +25,7 @@ NOTES_TOOL_PATH: Path = TOOLS_DIR / "notes_tool" / "notes_tool.py"
 JOB_TOOL_PATH: Path = TOOLS_DIR / "job_manager" / "job_tool.py"
 REMINDER_TOOL_PATH: Path = TOOLS_DIR / "reminder_tool" / "reminder_tool.py"
 TAXONOMY_CARTOGRAPHER_PATH: Path = Path("/storage/emulated/0/Admin/Dev/Tools/Taxonomy_Cartographer/taxonomy_cartographer.py")
+BLOGGER_TOOL_PATH: Path = TOOLS_DIR / "blogger_tool" / "blogger_tool.py"
 STATE_FILE_PATH: Path = CONFIG_DIR / "state.json"
 
 if str(LIB_DIR) not in sys.path:
@@ -83,6 +84,9 @@ SUPPORTED_MODES: Dict[str, str] = {
     "6": "taxonomy",
     "taxonomy": "taxonomy",
     "cartography": "taxonomy",
+    "7": "blogger",
+    "blog": "blogger",
+    "blogger": "blogger",
 }
 
 
@@ -140,6 +144,7 @@ def print_unified_status() -> None:
     print(f"  • [{ACCENT}4{RESET}] {ACCENT}Jobs:{RESET}      {NEUTRAL}Stateful Job Chamber{RESET}")
     print(f"  • [{ACCENT}5{RESET}] {ACCENT}Reminders:{RESET} {NEUTRAL}Launch Reminders & Tasks{RESET}")
     print(f"  • [{ACCENT}6{RESET}] {ACCENT}Taxonomy:{RESET}  {NEUTRAL}Taxonomy Cartographer{RESET}")
+    print(f"  • [{ACCENT}7{RESET}] {ACCENT}Blogger:{RESET}   {NEUTRAL}Google Blogger Subsystem{RESET}")
     print(f"{NEUTRAL}{DIVIDER_49}{RESET}")
 
 
@@ -166,6 +171,7 @@ def print_help_guide() -> None:
     print(f"  {ACCENT}note{RESET}    {NEUTRAL}Notes & MFDB Manager (Mode 3){RESET}")
     print(f"  {ACCENT}report{RESET}  {NEUTRAL}Research Paper Indexer (Mode 2){RESET}")
     print(f"  {ACCENT}tax{RESET}     {NEUTRAL}Taxonomy Cartographer (Mode 6){RESET}")
+    print(f"  {ACCENT}blog{RESET}    {NEUTRAL}Google Blogger Subsystem (Mode 7){RESET}")
     print()
     print(f"{ACCENT}QUICK CLI MATRIX:{RESET}")
     print(f"  [{ACCENT}remind{RESET}] {NEUTRAL}add <text> [-p <prio>] | done <id>{RESET}")
@@ -178,9 +184,10 @@ def print_help_guide() -> None:
     print(f"  [{ACCENT}note{RESET}]   {NEUTRAL}--list-notes | --note-new | --web{RESET}")
     print(f"  [{ACCENT}report{RESET}] {NEUTRAL}--list-entries | --query <term>{RESET}")
     print(f"  [{ACCENT}tax{RESET}]    {NEUTRAL}--map | --signatures | --ast{RESET}")
+    print(f"  [{ACCENT}blog{RESET}]   {NEUTRAL}info | posts [-n N] | publish <f>{RESET}")
     print()
     print(f"{ACCENT}MODE CONFIGURATION:{RESET}")
-    print(f"  {ACCENT}--select-mode <1-6>{RESET} {NEUTRAL}Switch active mode{RESET}")
+    print(f"  {ACCENT}--select-mode <1-7>{RESET} {NEUTRAL}Switch active mode{RESET}")
     print(f"  {ACCENT}--list-modes{RESET}        {NEUTRAL}Display modes{RESET}")
     print(f"  {ACCENT}--status{RESET}            {NEUTRAL}Display status banner{RESET}")
     print(f"{NEUTRAL}{DIVIDER_49}{RESET}")
@@ -224,14 +231,17 @@ def main() -> int:
     if first_argument in ("remind", "reminders", "reminder"):
         return forward_command(REMINDER_TOOL_PATH, arguments[1:])
 
+    if first_argument in ("blog", "blogger"):
+        return forward_command(BLOGGER_TOOL_PATH, arguments[1:])
+
     # 2. Mode management
     if first_argument in ("--select-mode", "-m"):
         if len(arguments) < 2:
-            print_fail("MODE VALUE REQUIRED (1/LOGGING, 2/REPORTS, 3/NOTES, 4/JOBS, 5/REMINDERS, OR 6/TAXONOMY).")
+            print_fail("MODE VALUE REQUIRED (1/LOGGING, 2/REPORTS, 3/NOTES, 4/JOBS, 5/REMINDERS, 6/TAXONOMY, OR 7/BLOGGER).")
             return 1
         mode_token = arguments[1].strip().lower()
         if mode_token not in SUPPORTED_MODES:
-            print_fail(f"INVALID MODE '{mode_token.upper()}'. ALLOWED: 1, 2, 3, 4, 5, OR 6.")
+            print_fail(f"INVALID MODE '{mode_token.upper()}'. ALLOWED: 1, 2, 3, 4, 5, 6, OR 7.")
             return 1
         chosen_mode = SUPPORTED_MODES[mode_token]
         state = load_shared_state()
@@ -253,6 +263,7 @@ def main() -> int:
         print(f" [{ACCENT}4{RESET}] {ACCENT}jobs{RESET}      - {NEUTRAL}Stateful Job Chamber{RESET}")
         print(f" [{ACCENT}5{RESET}] {ACCENT}reminders{RESET} - {NEUTRAL}Launch Reminders & Tasks{RESET}")
         print(f" [{ACCENT}6{RESET}] {ACCENT}taxonomy{RESET}  - {NEUTRAL}Taxonomy Cartographer{RESET}")
+        print(f" [{ACCENT}7{RESET}] {ACCENT}blogger{RESET}   - {NEUTRAL}Google Blogger Subsystem{RESET}")
         print(f"{NEUTRAL}{DIVIDER_49}{RESET}")
         return 0
 
@@ -307,6 +318,8 @@ def main() -> int:
         target_tool = JOB_TOOL_PATH
     elif active_mode in ("remind", "reminders", "reminder"):
         target_tool = REMINDER_TOOL_PATH
+    elif active_mode in ("blog", "blogger"):
+        target_tool = BLOGGER_TOOL_PATH
     else:
         target_tool = REPORT_INDEXER_PATH
     return forward_command(target_tool, arguments)

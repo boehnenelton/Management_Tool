@@ -1,0 +1,131 @@
+{
+  "ts": 1794417044,
+  "results": [
+    {
+      "panel": "logging_read",
+      "url": "http://127.0.0.1:8420/logging/read",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/logging_read.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "logging_write",
+      "url": "http://127.0.0.1:8420/logging/write",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/logging_write.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "reports_entries",
+      "url": "http://127.0.0.1:8420/reports/entries",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/reports_entries.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "reports_search",
+      "url": "http://127.0.0.1:8420/reports/search",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/reports_search.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "notes_list",
+      "url": "http://127.0.0.1:8420/notes/list",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/notes_list.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "notes_new",
+      "url": "http://127.0.0.1:8420/notes/new",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/notes_new.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "jobs_active",
+      "url": "http://127.0.0.1:8420/jobs/active",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/jobs_active.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "jobs_maintenance",
+      "url": "http://127.0.0.1:8420/jobs/maintenance",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/jobs_maintenance.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "reminders_active",
+      "url": "http://127.0.0.1:8420/reminders/active",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/reminders_active.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "reminders_add",
+      "url": "http://127.0.0.1:8420/reminders/add",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/reminders_add.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "environment_definitions",
+      "url": "http://127.0.0.1:8420/environment/definitions",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/environment_definitions.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "environment_set",
+      "url": "http://127.0.0.1:8420/environment/set",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/environment_set.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "blogger_info",
+      "url": "http://127.0.0.1:8420/blogger/info",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/blogger_info.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "blogger_posts",
+      "url": "http://127.0.0.1:8420/blogger/posts",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/blogger_posts.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    },
+    {
+      "panel": "blogger_publish",
+      "url": "http://127.0.0.1:8420/blogger/publish",
+      "shot": "/storage/emulated/0/Admin/System/tools/management_tool/tools/management_web/screenshots/blogger_publish.png",
+      "ok": true,
+      "overflow": [],
+      "errors": []
+    }
+  ],
+  "colors": {
+    "body_bg": "rgb(10, 10, 10)",
+    "header_bg": "rgb(18, 18, 18)",
+    "sidebar_bg": "rgb(18, 18, 18)",
+    "accent_sample": "rgb(18, 18, 18)"
+  }
+}

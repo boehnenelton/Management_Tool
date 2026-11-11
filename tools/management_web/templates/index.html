@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Management</title>
+<link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body data-active-tool="{{ active_tool }}" data-active-tab="{{ active_tab }}">
+
+<!-- ═══════════════ OVERLAY BACKDROP ═══════════════ -->
+<div id="sidebar-backdrop" class="backdrop" onclick="closeSidebar()"></div>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav id="sidebar" class="sidebar" aria-label="Tool navigation">
+  <div class="sidebar-header">
+    <span class="sidebar-title">Management</span>
+    <button class="sidebar-close" onclick="closeSidebar()" aria-label="Close sidebar">✕</button>
+  </div>
+
+  <ul class="sidebar-nav" id="sidebar-nav">
+
+    <!-- Mode 1: Logging -->
+    <li class="nav-item" data-tool="logging">
+      <button class="nav-btn" onclick="switchTool('logging', 'read')">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Logging</span>
+        <span class="nav-badge" id="badge-logging"></span>
+      </button>
+    </li>
+
+    <!-- Mode 2: Reports -->
+    <li class="nav-item" data-tool="reports">
+      <button class="nav-btn" onclick="switchTool('reports', 'entries')">
+        <span class="nav-icon">📄</span>
+        <span class="nav-label">Reports</span>
+        <span class="nav-badge" id="badge-reports"></span>
+      </button>
+    </li>
+
+    <!-- Mode 3: Notes -->
+    <li class="nav-item" data-tool="notes">
+      <button class="nav-btn" onclick="switchTool('notes', 'list')">
+        <span class="nav-icon">📝</span>
+        <span class="nav-label">Notes</span>
+        <span class="nav-badge" id="badge-notes"></span>
+      </button>
+    </li>
+
+    <!-- Mode 4: Jobs -->
+    <li class="nav-item" data-tool="jobs">
+      <button class="nav-btn" onclick="switchTool('jobs', 'active')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Jobs</span>
+        <span class="nav-badge" id="badge-jobs"></span>
+      </button>
+    </li>
+
+    <!-- Mode 5: Reminders -->
+    <li class="nav-item" data-tool="reminders">
+      <button class="nav-btn" onclick="switchTool('reminders', 'active')">
+        <span class="nav-icon">🔔</span>
+        <span class="nav-label">Reminders</span>
+        <span class="nav-badge" id="badge-reminders"></span>
+      </button>
+    </li>
+
+    <!-- Mode 6: Environment -->
+    <li class="nav-item" data-tool="environment">
+      <button class="nav-btn" onclick="switchTool('environment', 'definitions')">
+        <span class="nav-icon">🌿</span>
+        <span class="nav-label">Environment</span>
+        <span class="nav-badge" id="badge-environment"></span>
+      </button>
+    </li>
+
+    <!-- Mode 7: Blogger -->
+    <li class="nav-item" data-tool="blogger">
+      <button class="nav-btn" onclick="switchTool('blogger', 'info')">
+        <span class="nav-icon">✍️</span>
+        <span class="nav-label">Blogger</span>
+        <span class="nav-badge" id="badge-blogger"></span>
+      </button>
+    </li>
+
+  </ul>
+
+  <div class="sidebar-footer">
+    <span class="sidebar-version">Management v153</span>
+  </div>
+</nav>
+
+<!-- ═══════════════ MAIN LAYOUT ═══════════════ -->
+<div id="app-layout" class="app-layout">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <button class="hamburger" onclick="openSidebar()" aria-label="Open navigation">
+      <span></span><span></span><span></span>
+    </button>
+    <h1 class="app-title" id="app-title">System Management</h1>
+    <button class="settings-btn" onclick="toggleSettings()" aria-label="Settings">⚙</button>
+  </header>
+
+  <!-- SETTINGS OVERLAY -->
+  <div id="settings-overlay" class="settings-overlay hidden">
+    <div class="settings-panel">
+      <div class="settings-header">
+        <span>Settings</span>
+        <button onclick="toggleSettings()">✕</button>
+      </div>
+      <div class="settings-body">
+        <label>Theme
+          <select id="theme-select" onchange="setTheme(this.value)">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
+        <label>Log limit
+          <input type="number" id="log-limit-setting" value="50" min="5" max="500">
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOL SUBNAV (top tabs – per tool) -->
+  <div class="tool-subnav hidden" id="tool-subnav">
+    <div class="subnav-scroll" id="subnav-tabs"></div>
+    <div class="subnav-actions" id="subnav-actions"></div>
+  </div>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="app-main" id="app-main">
+    <div class="splash-state" id="splash">
+      <div class="splash-logo">⚙</div>
+      <p>Select a tool from the sidebar</p>
+    </div>
+  </main>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast hidden"></div>
+
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
